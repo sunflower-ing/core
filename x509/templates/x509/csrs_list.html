@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Certificate Sign Requests{% endblock page_title %}
+
+{% block content %}
+<div class="card card-default col-6 offset-3">
+    <div class="card-header">
+        <div class="card-tools">
+            <a href="{% url 'x509:csr_new' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Add
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if csrs_list %}
+        <div class="row">
+            <div class="col col-12">
+                <table class="table table-hover table-borderless">
+                <thead class="thead-dark">
+                    <tr>
+                    <th style="width: 10px">Signed</th>
+                    <th>Internal name</th>
+                    <th>Created</th>
+                    <th>CN</th>
+                    <th>OU</th>
+                    <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for csr in csrs_list %}
+                    <tr>
+                    <td>
+                        {% if csr.signed %}
+                        <i class="far fa-check-square"></i>
+                        {% else %}
+                        <i class="far fa-square"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>
+                            <a href="{% url 'x509:csr_detail' csr.id %}">{{ csr.name }}</a>
+                        </strong>
+                    </td>
+                    <td>{{ csr.created_at }}</td>
+                    <td>{{ csr.cn }}</td>
+                    <td>{{ csr.ou }}</td>
+                    <td>{{ csr.email }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+            <p>No CSRS</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Key: {{ key.name }}{% endblock page_title %}
+
+{% block content %}
+<div class="row">
+
+    <div class="col-4 offset-1">
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-info-circle"></i>&nbsp;
+                     Information
+                </h3>
+            </div>
+            <div class="card-body">
+                <p>Algo: <strong>{{ key.algo }}</strong></p>
+                <p>Length: <strong>{{ key.length }}</strong></p>
+                <p>Created: <strong>{{ key.created_at }}</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-5">
+        <div class="card card-default">
+            <div class="card-header">
+                {% if not key.used %}
+                <div class="card-tools">
+                    <a href="" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="callout callout-success">
+                    <h5>Public part</h5>
+                    <div class="form-group">
+                        <textarea class="form-control" rows="7">{{ key.public }}</textarea>
+                    </div>
+                </div>
+                <div class="callout callout-danger">
+                    <h5>Private part</h5>
+                    <div class="form-group">
+                        <textarea class="form-control" rows="11">{{ key.private }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

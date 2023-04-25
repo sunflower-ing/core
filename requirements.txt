@@ -1,0 +1,11 @@
+-i https://pypi.org/simple
+asgiref==3.6.0 ; python_version >= '3.7'
+bcrypt==4.0.1
+cffi==1.15.1
+cryptography==36.0.2
+django==4.2
+passlib[bcrypt]==1.7.4
+psycopg2-binary==2.9.6
+pycparser==2.21
+python-dotenv==1.0.0
+sqlparse==0.4.3 ; python_version >= '3.5'
