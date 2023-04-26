@@ -50,3 +50,32 @@ clean: ## Remove pre-commit hooks
 .PHONY: build
 build:
 	docker build -t sunflower:latest .
+
+###############################################################################
+#
+# Release
+#
+###############################################################################
+.PHONY: release
+release: ## Bump release version
+	pre-commit uninstall
+	docker run -it -v ${HOME}/.ssh:/root/.ssh \
+	-v ${PWD}:/app \
+	-e GITHUB_TOKEN=${GITHUB_TOKEN} \
+	-w /app \
+	registry.gitlab.com/xom4ek/toolset/semantic-release:2.0.0 semantic-release --ci=false --dry-run=false --no-verify
+	pre-commit uninstall
+.PHONY: release-dry-run
+
+release-dry-run: ## Dry run release
+	docker run -it -v ${HOME}/.ssh:/root/.ssh \
+	-v ${PWD}:/app \
+	-e GITHUB_TOKEN=${GITHUB_TOKEN} \
+	-w /app \
+	registry.gitlab.com/xom4ek/toolset/semantic-release:2.0.0 semantic-release --ci=false --dry-run --no-verify
+
+encrypt: ##Encrypt secret-values.yaml
+	werf helm secret values encrypt .helm/secret-values.yaml -o .helm/secret-values.yaml
+
+decrypt: ## Decrypt secret-values.yaml
+	werf helm secret values decrypt .helm/secret-values.yaml -o .helm/secret-values.yaml
