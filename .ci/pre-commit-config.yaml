@@ -23,17 +23,6 @@ repos:
     rev: 0.18.2
     hooks:
       - id: check-github-workflows
-  # ANSIBLE ####################################################################
-  - repo: https://github.com/ansible-community/ansible-lint
-    rev: v5.4.0
-    hooks:
-      - id: ansible-lint
-        args: ['-c', '.ci/ansible-lint']
-  # SSH checkouts are broken on GH
-  # - repo: ssh://git@bitbucket.astrazeneca.net:7999/scp/pre-commit-hooks
-  #   rev: e10a93759c45125d08af3ed9f4dc603919932ea4
-  #   hooks:
-  #     - id: encryption-check
   # DOCS #######################################################################
   # Need to wait for proper release
   # - repo: https://github.com/markdownlint/markdownlint
