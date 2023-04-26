@@ -46,7 +46,7 @@ spec:
             readOnly: true
           ports:
             - name: http
-              containerPort: {{ $.Values.configs.SERVER_PORT }}
+              containerPort: 8000
               protocol: TCP
           # livenessProbe:
           #   httpGet:
