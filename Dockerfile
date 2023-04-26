@@ -9,8 +9,7 @@ RUN apk update \
 
 COPY ./requirements.txt /tmp/requirements.txt
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
 
 COPY . /sunflower
 WORKDIR /sunflower
