@@ -10,7 +10,7 @@ jobs:
   optional_converge_or_dismiss:
     name: Optional Converge or Dismiss
     environment:
-      name: ${github_repository_id}-${pr_id}
+      name: review-${{ github.event.number }}
       url: https://${github_repository_id}-${pr_id}.sunflower3455.com
     runs-on: ubuntu-latest
     steps:
