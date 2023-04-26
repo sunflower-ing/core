@@ -1,0 +1,11 @@
+---
+label-schema:
+  maintainer: email
+  license: spdx
+  org.opencontainers.image.source: url
+  version: semver
+#  author: text
+#  contact: email
+#  created: rfc3339
+#  documentation: url
+#  git-revision: hash

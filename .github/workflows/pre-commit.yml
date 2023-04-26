@@ -1,0 +1,26 @@
+---
+name: Validate
+
+# yamllint disable-line rule:truthy
+on:
+  # yamllint disable-line rule:empty-values
+  push:
+    branches:
+      - '!master'
+      - '!main'
+      - '!refs/pull/*'
+      - '*'
+
+jobs:
+
+  pre-commit:
+    name: Run Pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Make validate
+        run: make validate

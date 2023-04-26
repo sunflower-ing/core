@@ -1,0 +1,92 @@
+---
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: check-added-large-files
+      - id: check-case-conflict
+      # - id: check-executables-have-shebangs
+      # - id: check-shebang-scripts-are-executable
+      - id: check-merge-conflict
+      - id: check-json
+      - id: check-toml
+      # - id: check-yaml
+      # - id: detect-private-key
+      # - id: detect-aws-credentials
+  # CICD ####################################################################
+  - repo: https://github.com/sirosen/check-jsonschema
+    rev: 0.18.2
+    hooks:
+      - id: check-github-workflows
+  # ANSIBLE ####################################################################
+  - repo: https://github.com/ansible-community/ansible-lint
+    rev: v5.4.0
+    hooks:
+      - id: ansible-lint
+        args: ['-c', '.ci/ansible-lint']
+  # SSH checkouts are broken on GH
+  # - repo: ssh://git@bitbucket.astrazeneca.net:7999/scp/pre-commit-hooks
+  #   rev: e10a93759c45125d08af3ed9f4dc603919932ea4
+  #   hooks:
+  #     - id: encryption-check
+  # DOCS #######################################################################
+  # Need to wait for proper release
+  # - repo: https://github.com/markdownlint/markdownlint
+  #   rev: f6d205a9bc118723f52e3242faebc58f9b46fd72
+  #   hooks:
+  #     - id: markdownlint_docker
+  # PYTHON #####################################################################
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        args: ['--config', 'pyproject.toml']
+  - repo: https://github.com/PyCQA/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+        args: ['--config', '.ci/flake8']
+  # DOCKER #####################################################################
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.10.0
+    hooks:
+      - id: hadolint-docker
+        args: ['-c', '.ci/hadolint.yaml']
+      # - id: hadolint
+  # DATA FILES #################################################################
+  # - repo: https://github.com/adrienverge/yamllint
+  #   rev: v1.27.1
+  #   hooks:
+  #     - id: yamllint
+  #       args: ['-c', '.ci/yamllint']
+  # SHELL ######################################################################
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: shellcheck
+      - id: shfmt
+  # TERRAFORM ##################################################################
+#  - repo: https://github.com/tfsec/tfsec
+#    rev: v1.27.6
+#    hooks:
+#      - id: tfsec
+#        args: ["--tfvars-file", "terraform/terraform.tfvars"]
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.21
+    hooks:
+      - id: helmlint
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v1.3.0
+    hooks:
+      - id: conventional-pre-commit
+
+  - repo: https://github.com/sirwart/ripsecrets
+    rev: v0.1.5
+    hooks:
+      - id: ripsecrets
