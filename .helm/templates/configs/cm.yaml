@@ -9,3 +9,7 @@ data:
   {{ $conf_key  }}: {{ $conf_value | quote }}
 {{- end}}
   POSTGRES_SERVER: {{ .Release.Name }}-postgresql
+  test: |
+{{- if .Values.werf }}
+{{ index .Values.werf "image" | nindent 4 }}
+{{ end }}
