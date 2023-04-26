@@ -7,8 +7,9 @@ on:
       - synchronize
 jobs:
 
-  optional_converge_or_dismiss:
-    name: Optional Converge or Dismiss
+  converage:
+    name: Converage
+    if: contains( github.event.pull_request.labels.*.name, 'review' )
     environment:
       name: review-${{ github.event.number }}
       url: https://amazeit-sunflower-${{ github.event.number }}.sunflower3455.com
@@ -35,6 +36,17 @@ jobs:
         env:
           WERF_SECRET_KEY: ${{ secrets.WERF_SECRET_KEY }}
         if: contains( github.event.pull_request.labels.*.name, 'review' )
+
+  Dismiss:
+    name: Dismiss
+    runs-on: ubuntu-latest
+    if: "!contains( github.event.pull_request.labels.*.name, 'review' )"
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Dismiss
         uses: werf/actions/dismiss@v1.2
