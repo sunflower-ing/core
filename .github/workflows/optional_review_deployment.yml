@@ -42,3 +42,9 @@ jobs:
           env: review-${{ github.event.number }}
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         if: "!contains( github.event.pull_request.labels.*.name, 'review' )"
+
+      - uses: strumwolf/delete-deployment-environment@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: review-${{ github.event.number }}
+        if: "!contains( github.event.pull_request.labels.*.name, 'review' )"
