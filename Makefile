@@ -64,7 +64,7 @@ release: ## Bump release version
 	-e GITHUB_TOKEN=${GITHUB_TOKEN} \
 	-w /app \
 	registry.gitlab.com/xom4ek/toolset/semantic-release:2.0.0 semantic-release --ci=false --dry-run=false --no-verify
-	pre-commit uninstall
+	pre-commit install --install-hooks -c .ci/pre-commit-config.yaml
 .PHONY: release-dry-run
 
 release-dry-run: ## Dry run release
