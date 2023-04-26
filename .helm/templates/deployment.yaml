@@ -40,10 +40,6 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          volumeMounts:
-          - name: files
-            mountPath: "/mnt/files"
-            readOnly: true
           ports:
             - name: http
               containerPort: 8000
@@ -70,8 +66,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      volumes:
-        - name: files
-          secret:
-            secretName: {{ include "sunflower.fullname" . }}-files
-            optional: false

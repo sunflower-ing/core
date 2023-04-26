@@ -15,7 +15,7 @@ configs:
   DB_ENGINE: django.db.backends.postgresql
   DEBUG: 'true'
   DB_NAME: "sunflower-db"
-  DB_HOST: localhost
+  # DB_HOST: localhost
   DB_PORT: 5432
 
 

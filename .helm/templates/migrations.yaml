@@ -42,10 +42,6 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         {{- end }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        volumeMounts:
-        - name: files
-          mountPath: "/mnt/files"
-          readOnly: true
         command:
           - /bin/sh
           - -c
@@ -57,10 +53,4 @@ spec:
             echo "DONE"
         resources:
           {{- toYaml .Values.migrate.resources | nindent 12 }}
-      volumes:
-        - name: files
-          secret:
-            secretName: {{ include "sunflower.fullname" . }}-files
-            optional: false
-
 {{- end }}
