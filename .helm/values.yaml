@@ -8,8 +8,8 @@ postgresql:
   enabled: true
   auth:
     enablePostgresUser: true
-    username: "vicarius"
-    database: "vicarius"
+    username: "sunflower-user"
+    database: "sunflower-db"
 
 configs:
   DB_ENGINE: django.db.backends.postgresql
@@ -22,7 +22,7 @@ configs:
 replicaCount: 1
 
 image:
-  repository: ghcr.io/amazeit/sunflower/vicarius
+  repository: ghcr.io/amazeit/sunflower/sunflower
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "defaulttag"

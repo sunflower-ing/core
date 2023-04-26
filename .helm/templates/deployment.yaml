@@ -35,7 +35,7 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           {{- if .Values.werf }}
-          image: "{{ index .Values.werf.image "sunflower"}}"
+          {{ werf_container_image . | indent 8 }}
           {{- else }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           {{- end }}
