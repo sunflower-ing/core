@@ -11,7 +11,7 @@ jobs:
     name: Optional Converge or Dismiss
     environment:
       name: review-${{ github.event.number }}
-      url: https://${github_repository_id}-${pr_id}.sunflower3455.com
+      url: https://amazeit-sunflower-${{ github.event.number }}.sunflower3455.com
     runs-on: ubuntu-latest
     steps:
 
