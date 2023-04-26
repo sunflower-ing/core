@@ -30,7 +30,7 @@ analyzeCommits:
       - type: chore
         release: false
       - type: ci
-        release: false
+        release: patch
       - type: docs
         release: patch
       - type: feat
