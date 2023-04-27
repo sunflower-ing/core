@@ -1,3 +1,5 @@
+KUBE_NAMESPACE ?= sunflower-staging
+
 .PHONY: help
 help: ## show this help
 	@echo "make"; echo
@@ -19,7 +21,6 @@ get-versions: ## Get sofware versions installed
 	@printf -- '--- %s version ---\n' "Pre-commit"
 	@type pre-commit && pre-commit --version 2>/dev/null || true
 	@pre-commit --version 2>/dev/null || echo "No Pre-commit found in: $(PIPENV)"
-	@cd "$(TERRAFORM_ROOT)" && make get-versions || true
 
 
 ###############################################################################
@@ -65,8 +66,8 @@ release: ## Bump release version
 	-w /app \
 	registry.gitlab.com/xom4ek/toolset/semantic-release:2.0.0 semantic-release --ci=false --dry-run=false --no-verify
 	pre-commit install --install-hooks -c .ci/pre-commit-config.yaml
-.PHONY: release-dry-run
 
+.PHONY: release-dry-run
 release-dry-run: ## Dry run release
 	docker run -it -v ${HOME}/.ssh:/root/.ssh \
 	-v ${PWD}:/app \
@@ -74,8 +75,20 @@ release-dry-run: ## Dry run release
 	-w /app \
 	registry.gitlab.com/xom4ek/toolset/semantic-release:2.0.0 semantic-release --ci=false --dry-run --no-verify
 
-encrypt: ##Encrypt secret-values.yaml
+.PHONY: encrypt
+encrypt: ## Encrypt .helm/secret.yaml
 	werf helm secret values encrypt .helm/secret-values.yaml -o .helm/secret-values.yaml
 
-decrypt: ## Decrypt secret-values.yaml
+.PHONY: decrypt
+decrypt: ## Decrypt .helm/secret.yaml
 	werf helm secret values decrypt .helm/secret-values.yaml -o .helm/secret-values.yaml
+
+.PHONY: kube-login
+kube-login: ## Login to kuberntes and set namespace to $KUBE_NAMESPACE
+	tsh login --proxy teleport.sunflower3455.com
+	tsh kube ls
+	tsh kube login do-sunflower3455-com
+	kubectl config set-context --current --namespace ${KUBE_NAMESPACE}
+	echo 'Example usage:'
+	echo 'kubectl get pods'
+	echo 'kubectl logs POD_NAME'
