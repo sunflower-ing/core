@@ -1,14 +1,19 @@
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+from cryptography import x509
 from django.db import models
 
-from utils.crypto import key_from_pem, key_to_pem, make_keys
+from utils.crypto import (
+    key_from_pem,
+    key_to_pem,
+    make_keys,
+    make_csr,
+    csr_to_pem,
+    csr_from_pem,
+)
 
 ALGO_RSA = "RSA"
 ALGO_DSA = "DSA"
-ALGO_CHOICES = (
-    (ALGO_RSA, ALGO_RSA),
-    (ALGO_DSA, ALGO_DSA),
-)
+ALGO_CHOICES = ((ALGO_RSA, ALGO_RSA), (ALGO_DSA, ALGO_DSA))
 
 LENGTH_1024 = 1024
 LENGTH_2048 = 2048
@@ -55,14 +60,10 @@ class Key(models.Model):
         self.public = key_to_pem(public_key).decode()
         return super().save(*args, **kwargs)
 
-    def private_as_object(
-        self
-    ) -> rsa.RSAPrivateKey | dsa.DSAPrivateKey:
+    def private_as_object(self) -> rsa.RSAPrivateKey | dsa.DSAPrivateKey:
         return key_from_pem(self.private.encode(), private=True)
 
-    def public_as_object(
-        self
-    ) -> rsa.RSAPublicKey | dsa.DSAPublicKey:
+    def public_as_object(self) -> rsa.RSAPublicKey | dsa.DSAPublicKey:
         return key_from_pem(self.public.encode())
 
 
@@ -84,6 +85,16 @@ class CSR(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs) -> None:
+        csr_object = make_csr(self.key.private_as_object(), self.params)
+        self.body = csr_to_pem(csr_object).decode()
+        self.key.used = True
+        self.key.save()
+        return super().save(*args, **kwargs)
+
+    def as_object(self) -> x509.CertificateSigningRequest:
+        return csr_from_pem(self.body.encode())
 
 
 class Certificate(models.Model):
