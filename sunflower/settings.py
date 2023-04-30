@@ -31,6 +31,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = ["stage.sunflower3455.com"]
+CSRF_TRUSTED_ORIGINS = ["https://*.sunflower3455.com"]
 
 
 # Application definition
