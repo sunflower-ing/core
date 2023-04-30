@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["stage.sunflower3455.com"]
 
 
 # Application definition
