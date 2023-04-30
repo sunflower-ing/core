@@ -9,6 +9,9 @@ from utils.crypto import (
     make_csr,
     csr_to_pem,
     csr_from_pem,
+    make_cert,
+    cert_from_pem,
+    cert_to_pem,
 )
 
 ALGO_RSA = "RSA"
@@ -107,6 +110,24 @@ class Certificate(models.Model):
     )
 
     revoked = models.BooleanField(verbose_name="Revoked", default=False)
+
+    def __str__(self) -> str:
+        return self.csr.name
+
+    def save(self, *args, **kwargs) -> None:
+        cert_object = make_cert(
+            self.parent.as_object(),
+            self.parent.csr.key.private_as_object(),
+            self.csr.as_object(),
+            self.csr.params,
+        )
+        self.body = cert_to_pem(cert_object).decode()
+        self.csr.signed = True
+        self.csr.save()
+        return super().save(*args, **kwargs)
+
+    def as_object(self) -> x509.Certificate:
+        return cert_from_pem(self.body.encode())
 
 
 # class CRL(models.Model):

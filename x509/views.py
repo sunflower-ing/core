@@ -12,6 +12,10 @@ def certificate_detail(request, certificate_id):
     return HttpResponse("Hello, world. You're at the polls index.")
 
 
+def certificate_new(request):
+    pass
+
+
 def keys_list(request):
     keys = Key.objects.order_by("-created_at")
     ctx = {"keys_list": keys}

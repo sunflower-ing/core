@@ -142,7 +142,9 @@ def make_cert(
             # TODO: Get from parent and decrease
 
         cert = cert.add_extension(
-            x509.BasicConstraints(ca=True, path_length=data.get("path_length")),
+            x509.BasicConstraints(
+                ca=True, path_length=data.get("path_length")
+            ),
             critical=True,
         ).add_extension(
             x509.KeyUsage(
