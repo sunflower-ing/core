@@ -30,8 +30,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', ["*"])
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', ["https://*"])
 
 # Application definition
 

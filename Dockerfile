@@ -1,4 +1,4 @@
-FROM python:3.9.15-alpine3.15
+FROM python:3.10.11-alpine3.17
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -9,8 +9,7 @@ RUN apk update \
 
 COPY ./requirements.txt /tmp/requirements.txt
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
 
 COPY . /sunflower
 WORKDIR /sunflower

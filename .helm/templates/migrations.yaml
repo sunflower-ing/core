@@ -37,30 +37,20 @@ spec:
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         {{- if .Values.werf }}
-        image: "{{ index .Values.werf.image "backend"}}"
+        image: "{{ index .Values.werf "nameless_image"}}"
         {{- else }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         {{- end }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        volumeMounts:
-        - name: files
-          mountPath: "/mnt/files"
-          readOnly: true
         command:
           - /bin/sh
           - -c
           - |
-            until (nc -vz $POSTGRES_SERVER 5432);
+            until (nc -vz $DB_HOST 5432);
             do
                 echo "waiting for Postgresql"; sleep 1;
             done
             echo "DONE"
         resources:
           {{- toYaml .Values.migrate.resources | nindent 12 }}
-      volumes:
-        - name: files
-          secret:
-            secretName: {{ include "sunflower.fullname" . }}-files
-            optional: false
-
 {{- end }}

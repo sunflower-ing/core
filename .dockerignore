@@ -1,0 +1,8 @@
+.github
+.ci
+.helm
+.releaserc.yml
+werf.yaml
+Makefile
+.gitignore
+*.md

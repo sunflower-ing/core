@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block page_title %}CSR: {{ csr.name }}{% endblock page_title %}
+
+{% block content %}
+<div class="row">
+
+    <div class="col-4 offset-1">
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-info-circle"></i>&nbsp;
+                     Information
+                </h3>
+            </div>
+            <div class="card-body">
+                <p>Key: <strong><a href="{% url 'x509:key_detail' key_id=csr.key.id %}">{{ csr.key.name }}</a></strong></p>
+                <p>CA: <strong>{{ csr.ca }}</strong></p>
+                {% if csr.ca %}
+                <p>Path length: <strong>{{ csr.path_length }}</strong></p>
+                {% endif %}
+                <p>
+                    {% comment %} Params: {% endcomment %}
+                    <blockquote>
+                        {% for k, v in csr.params.items %}
+                        {{ k }}: <strong>{{ v }}</strong><br>
+                        {% endfor %}
+                    </blockquote>
+                </p>
+                <p>Created: <strong>{{ csr.created_at }}</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-5">
+        <div class="card card-default">
+            <div class="card-header">
+                {% if not csr.signed %}
+                <div class="card-tools">
+                    <a href="" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                    <a href="" class="btn btn-sm btn-success">
+                        <i class="fas fa-file-signature"></i> Sign
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="callout callout-success">
+                    <h5>Body</h5>
+                    <div class="form-group">
+                        <textarea class="form-control" rows="7">{{ csr.body }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

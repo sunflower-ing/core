@@ -1,14 +1,22 @@
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+from cryptography import x509
 from django.db import models
 
-from utils.crypto import key_from_pem, key_to_pem, make_keys
+from utils.crypto import (
+    key_from_pem,
+    key_to_pem,
+    make_keys,
+    make_csr,
+    csr_to_pem,
+    csr_from_pem,
+    make_cert,
+    cert_from_pem,
+    cert_to_pem,
+)
 
 ALGO_RSA = "RSA"
 ALGO_DSA = "DSA"
-ALGO_CHOICES = (
-    (ALGO_RSA, ALGO_RSA),
-    (ALGO_DSA, ALGO_DSA),
-)
+ALGO_CHOICES = ((ALGO_RSA, ALGO_RSA), (ALGO_DSA, ALGO_DSA))
 
 LENGTH_1024 = 1024
 LENGTH_2048 = 2048
@@ -55,14 +63,10 @@ class Key(models.Model):
         self.public = key_to_pem(public_key).decode()
         return super().save(*args, **kwargs)
 
-    def private_as_object(
-        self
-    ) -> rsa.RSAPrivateKey | dsa.DSAPrivateKey:
+    def private_as_object(self) -> rsa.RSAPrivateKey | dsa.DSAPrivateKey:
         return key_from_pem(self.private.encode(), private=True)
 
-    def public_as_object(
-        self
-    ) -> rsa.RSAPublicKey | dsa.DSAPublicKey:
+    def public_as_object(self) -> rsa.RSAPublicKey | dsa.DSAPublicKey:
         return key_from_pem(self.public.encode())
 
 
@@ -85,6 +89,16 @@ class CSR(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args, **kwargs) -> None:
+        csr_object = make_csr(self.key.private_as_object(), self.params)
+        self.body = csr_to_pem(csr_object).decode()
+        self.key.used = True
+        self.key.save()
+        return super().save(*args, **kwargs)
+
+    def as_object(self) -> x509.CertificateSigningRequest:
+        return csr_from_pem(self.body.encode())
+
 
 class Certificate(models.Model):
     csr = models.ForeignKey(to=CSR, on_delete=models.RESTRICT)
@@ -96,6 +110,24 @@ class Certificate(models.Model):
     )
 
     revoked = models.BooleanField(verbose_name="Revoked", default=False)
+
+    def __str__(self) -> str:
+        return self.csr.name
+
+    def save(self, *args, **kwargs) -> None:
+        cert_object = make_cert(
+            self.parent.as_object(),
+            self.parent.csr.key.private_as_object(),
+            self.csr.as_object(),
+            self.csr.params,
+        )
+        self.body = cert_to_pem(cert_object).decode()
+        self.csr.signed = True
+        self.csr.save()
+        return super().save(*args, **kwargs)
+
+    def as_object(self) -> x509.Certificate:
+        return cert_from_pem(self.body.encode())
 
 
 # class CRL(models.Model):

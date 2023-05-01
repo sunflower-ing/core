@@ -136,13 +136,15 @@ def make_cert(
         )
     )
 
-    if hasattr(data, "ca"):
-        if not data.path_length:
+    if data.get("ca"):
+        if not data.get("path_length"):
             data.path_length = 1
             # TODO: Get from parent and decrease
 
         cert = cert.add_extension(
-            x509.BasicConstraints(ca=True, path_length=data.path_length),
+            x509.BasicConstraints(
+                ca=True, path_length=data.get("path_length")
+            ),
             critical=True,
         ).add_extension(
             x509.KeyUsage(
@@ -164,7 +166,7 @@ def make_cert(
             x509.BasicConstraints(ca=False, path_length=None), critical=True
         )
 
-        if data.client_auth:  # client cert
+        if data.get("extendedKeyUsage") == "client_auth":  # client cert
             cert = cert.add_extension(
                 x509.KeyUsage(
                     digital_signature=True,
@@ -183,7 +185,7 @@ def make_cert(
                 critical=True,
             )
 
-        if data.server_auth:  # server cert
+        if data.get("extendedKeyUsage") == "server_auth":  # server cert
             cert = cert.add_extension(
                 x509.KeyUsage(
                     digital_signature=True,
