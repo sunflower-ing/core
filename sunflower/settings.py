@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = ["stage.sunflower3455.com"]
+ALLOWED_HOSTS = ["*.sunflower3455.com"]
 CSRF_TRUSTED_ORIGINS = ["https://*.sunflower3455.com"]
 
 
