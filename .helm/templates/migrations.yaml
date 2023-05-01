@@ -50,6 +50,7 @@ spec:
             do
                 echo "waiting for Postgresql"; sleep 1;
             done
+            python3 manage.py migrate
             echo "DONE"
         resources:
           {{- toYaml .Values.migrate.resources | nindent 12 }}
