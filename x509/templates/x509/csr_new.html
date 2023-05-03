@@ -58,6 +58,32 @@
             <div class="row">
                 <div class="col-6">
                     <div class="form-group">
+                        <label for="path_length">Path length (for ca)</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="path_length"
+                            placeholder="1"
+                            name="path_length"
+                            value="{{ path_length }}"
+                        >
+                    </div>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            id="ca"
+                            name="ca"
+                            {% if ca %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="ca">Is CA</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-group">
                         <label for="countryName">Country name</label>
                         <input
                             type="text"

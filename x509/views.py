@@ -109,7 +109,7 @@ def csr_new(request):
                 params=ctx["params"],
             )
             csr.save()
-            return redirect("x509:key_detail", key_id=key.id)
+            return redirect("x509:csr_detail", key_id=key.id)
 
         except Exception as e:
             ctx.update({"error": str(e)})
