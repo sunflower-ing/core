@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Sign Certificate{% endblock page_title %}
+
+{% block content %}
+<div class="card card-default col-5 offset-3">
+    <div class="card-body">
+        {% if error %}
+        <p class="text-danger">{{ error }}</p>
+        {% endif %}
+        <form action="" method="post">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>CSR</label>
+                        <select class="form-control" name="csr">
+                            {% for a_csr in available_csrs %}
+                            <option value="{{ a_csr.id }}" {% if a_csr.id == csr %}selected{% endif %}>
+                                {{ a_csr.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>CA to sign</label>
+                        <select class="form-control" name="ca">
+                            <option value="0">Self sign</option>
+                            {% for ca in available_cas %}
+                            <option value="{{ ca.id }}">
+                                {{ ca.csr.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Sign</button>
+        </form>
+    </div>
+</div>
+{% endblock content %}

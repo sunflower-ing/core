@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block page_title %}CSR: {{ csr.name }}{% endblock page_title %}
+{% block page_title %}Certificate: {{ certificate.csr.name }}{% endblock page_title %}
 
 {% block content %}
 <div class="row">
@@ -14,23 +14,21 @@
                 </h3>
             </div>
             <div class="card-body">
-                <p>Key: <strong><a href="{% url 'x509:key_detail' key_id=csr.key.id %}">link</a></strong></p>
-                {% if certificate %}
-                <p>Certificate: <strong><a href="{% url 'x509:certificate_detail' certificate_id=certificate.id %}">link</a></strong></strong></p>
-                {% endif %}
-                <p>CA: <strong>{{ csr.ca }}</strong></p>
-                {% if csr.ca %}
-                <p>Path length: <strong>{{ csr.path_length }}</strong></p>
+                <p>Key: <strong><a href="{% url 'x509:key_detail' key_id=certificate.csr.key.id %}">link</a></strong></p>
+                <p>CSR: <strong><a href="{% url 'x509:csr_detail' csr_id=certificate.csr.id %}">link</a></strong></strong></p>
+                <p>CA: <strong>{{ certificate.csr.ca }}</strong></p>
+                {% if certificate.csr.ca %}
+                <p>Path length: <strong>{{ certificate.csr.path_length }}</strong></p>
                 {% endif %}
                 <p>
                     {% comment %} Params: {% endcomment %}
                     <blockquote>
-                        {% for k, v in csr.params.items %}
+                        {% for k, v in certificate.csr.params.items %}
                         {{ k }}: <strong>{{ v }}</strong><br>
                         {% endfor %}
                     </blockquote>
                 </p>
-                <p>Created: <strong>{{ csr.created_at }}</strong></p>
+                <p>Created: <strong>{{ certificate.created_at }}</strong></p>
             </div>
         </div>
     </div>
@@ -41,10 +39,7 @@
                 {% if not csr.signed %}
                 <div class="card-tools">
                     <a href="" class="btn btn-sm btn-danger">
-                        <i class="fas fa-trash"></i> Delete
-                    </a>
-                    <a href="{% url 'x509:certificate_new' %}?csr_id={{ csr.id }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-file-signature"></i> Sign
+                        <i class="fas fa-trash"></i> Revoke
                     </a>
                 </div>
                 {% endif %}
@@ -53,7 +48,7 @@
                 <div class="callout callout-success">
                     <h5>Body</h5>
                     <div class="form-group">
-                        <textarea class="form-control" rows="14">{{ csr.body }}</textarea>
+                        <textarea class="form-control" rows="14">{{ certificate.body }}</textarea>
                     </div>
                 </div>
             </div>

@@ -7,18 +7,25 @@ from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
-DISTINGUISHED_NAME = {
+LOCALITY_DN = {
     "countryName": NameOID.COUNTRY_NAME,
     "stateOrProvinceName": NameOID.STATE_OR_PROVINCE_NAME,
     "localityName": NameOID.LOCALITY_NAME,
+}
+
+ORGANIZATION_DN = {
     "organizationName": NameOID.ORGANIZATION_NAME,
     "organizationUnitName": NameOID.ORGANIZATIONAL_UNIT_NAME,
+}
+
+ENDUSER_DN = {
     "commonName": NameOID.COMMON_NAME,
     "emailAddress": NameOID.EMAIL_ADDRESS,
-    # End-users
     "givenName": NameOID.GIVEN_NAME,
     "surname": NameOID.SURNAME,
 }
+
+DISTINGUISHED_NAME = LOCALITY_DN | ORGANIZATION_DN | ENDUSER_DN
 
 
 def _read_pkcs12(
@@ -87,9 +94,7 @@ def make_csr(
     if not data.get("commonName"):
         return None
 
-    x509_names = [
-        x509.NameAttribute(NameOID.COMMON_NAME, data.get("commonName"))
-    ]
+    x509_names = []
 
     for dn_key, dn_value in data.items():
         if dn_value and DISTINGUISHED_NAME.get(dn_key):
@@ -115,20 +120,22 @@ def csr_from_pem(csr_pem: bytes) -> x509.CertificateSigningRequest:
 
 
 def make_cert(
-    ca_cert: x509.Certificate,
-    ca_key: rsa.RSAPrivateKey,
+    ca_cert: x509.Certificate | x509.CertificateSigningRequest,
+    ca_key: rsa.RSAPrivateKey | dsa.DSAPrivateKey,
     csr: x509.CertificateSigningRequest,
     data: dict,
+    self_sign: bool = False,
+    issuer_dn: bool = False,
 ) -> x509.Certificate | None:
     cert = (
         x509.CertificateBuilder()
         .public_key(csr.public_key())
-        .subject_name(csr.subject)
-        .issuer_name(ca_cert.issuer)
+        # .subject_name(csr.subject)
         .serial_number(x509.random_serial_number())
         .not_valid_before(datetime.datetime.utcnow())
         .not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=data.days)
+            datetime.datetime.utcnow()
+            + datetime.timedelta(days=data.get("days"))
         )
         .add_extension(
             x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()),
@@ -136,7 +143,34 @@ def make_cert(
         )
     )
 
-    if data.get("ca"):
+    if issuer_dn:
+        x509_names = []
+
+        for dn_key, dn_value in (LOCALITY_DN | ORGANIZATION_DN).items():
+            x509_names.append(
+                x509.NameAttribute(
+                    DISTINGUISHED_NAME[dn_key],
+                    ca_cert.subject.get_attributes_for_oid(dn_value),
+                )
+            )
+
+        for dn_key, dn_value in data.items():
+            if dn_value and ENDUSER_DN.get(dn_key):
+                x509_names.append(
+                    x509.NameAttribute(DISTINGUISHED_NAME[dn_key], dn_value)
+                )
+
+        cert = cert.subject_name(x509.Name(x509_names))
+
+    else:
+        cert = cert.subject_name(csr.subject)
+
+    if self_sign:
+        cert = cert.issuer_name(csr.subject)
+    else:
+        cert = cert.issuer_name(ca_cert.subject)
+
+    if data.get("ca") is True:
         if not data.get("path_length"):
             data.path_length = 1
             # TODO: Get from parent and decrease

@@ -99,10 +99,16 @@ class CSR(models.Model):
     def as_object(self) -> x509.CertificateSigningRequest:
         return csr_from_pem(self.body.encode())
 
+    @property
+    def subject(self):
+        return self.as_object().subject.rfc4514_string()
+
 
 class Certificate(models.Model):
     csr = models.ForeignKey(to=CSR, on_delete=models.RESTRICT)
-    parent = models.ForeignKey(to="self", on_delete=models.RESTRICT)
+    parent = models.ForeignKey(
+        to="self", on_delete=models.RESTRICT, null=True, blank=True
+    )
 
     body = models.TextField(verbose_name="Certificate")
     created_at = models.DateTimeField(
@@ -115,12 +121,24 @@ class Certificate(models.Model):
         return self.csr.name
 
     def save(self, *args, **kwargs) -> None:
-        cert_object = make_cert(
-            self.parent.as_object(),
-            self.parent.csr.key.private_as_object(),
-            self.csr.as_object(),
-            self.csr.params,
-        )
+        if not self.parent:
+            cert_object = make_cert(
+                ca_cert=self.csr.as_object(),
+                ca_key=self.csr.key.private_as_object(),
+                csr=self.csr.as_object(),
+                data=self.csr.params,
+                self_sign=True,
+                issuer_dn=self.csr.params.get("issuerDN"),
+            )
+        else:
+            cert_object = make_cert(
+                ca_cert=self.parent.as_object(),
+                ca_key=self.parent.csr.key.private_as_object(),
+                csr=self.csr.as_object(),
+                data=self.csr.params,
+                self_sign=False,
+                issuer_dn=self.csr.params.get("issuerDN"),
+            )
         self.body = cert_to_pem(cert_object).decode()
         self.csr.signed = True
         self.csr.save()
@@ -128,6 +146,10 @@ class Certificate(models.Model):
 
     def as_object(self) -> x509.Certificate:
         return cert_from_pem(self.body.encode())
+
+    @property
+    def subject(self):
+        return self.csr.subject
 
 
 # class CRL(models.Model):

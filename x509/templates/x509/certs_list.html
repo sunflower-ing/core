@@ -1,34 +1,34 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Certificate Sign Requests{% endblock page_title %}
+{% block page_title %}Certificates{% endblock page_title %}
 
 {% block content %}
 <div class="card card-default col-8 offset-2">
     <div class="card-header">
         <div class="card-tools">
-            <a href="{% url 'x509:csr_new' %}" class="btn btn-success">
+            <a href="{% url 'x509:certificate_new' %}" class="btn btn-success">
                 <i class="fas fa-plus"></i> Add
             </a>
         </div>
     </div>
     <div class="card-body">
-        {% if csrs_list %}
+        {% if certificates_list %}
         <div class="row">
             <div class="col col-12">
                 <table class="table table-hover table-borderless">
                 <thead class="thead-dark">
                     <tr>
-                    <th style="width: 10px">Signed</th>
+                    <th style="width: 10px">Revoked</th>
                     <th>Internal name</th>
                     <th>Created</th>
                     <th>Subject</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for csr in csrs_list %}
+                    {% for cert in certificates_list %}
                     <tr>
                     <td>
-                        {% if csr.signed %}
+                        {% if cert.revoked %}
                         <i class="far fa-check-square"></i>
                         {% else %}
                         <i class="far fa-square"></i>
@@ -36,11 +36,11 @@
                     </td>
                     <td>
                         <strong>
-                            <a href="{% url 'x509:csr_detail' csr.id %}">{{ csr.name }}</a>
+                            <a href="{% url 'x509:certificate_detail' cert.id %}">{{ cert.csr.name }}</a>
                         </strong>
                     </td>
-                    <td>{{ csr.created_at }}</td>
-                    <td>{{ csr.subject }}</td>
+                    <td>{{ cert.created_at }}</td>
+                    <td>{{ cert.subject }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -48,7 +48,7 @@
             </div>
         </div>
         {% else %}
-            <p>No CSRs</p>
+            <p>No Certificates</p>
         {% endif %}
     </div>
 </div>

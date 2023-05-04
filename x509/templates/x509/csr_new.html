@@ -147,16 +147,16 @@
                     <input
                         type="checkbox"
                         class="form-check-input"
-                        id="takeFromIssuer"
-                        name="params.takeFromIssuer"
-                        {% if params.takeFromIssuer %}checked{% endif %}
+                        id="issuerDN"
+                        name="issuerDN"
+                        {% if params.issuerDN %}checked{% endif %}
                     >
-                    <label class="form-check-label" for="takeFromIssuer">Take from issuer</label>
+                    <label class="form-check-label" for="issuerDN">Take DN from issuer</label>
                 </div>
             </div>
             <hr>
             <div class="row">
-                <div class="col-4">
+                <div class="col-3">
                     <div class="form-group">
                         <label for="emailAddress">E-Mail</label>
                         <input
@@ -169,7 +169,7 @@
                         >
                     </div>
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                     <div class="form-group">
                         <label for="givenName">Given name</label>
                         <input
@@ -182,7 +182,7 @@
                         >
                     </div>
                 </div>
-                <div class="col-4">
+                <div class="col-3">
                     <div class="form-group">
                         <label for="surname">Surname</label>
                         <input
@@ -192,6 +192,19 @@
                             placeholder="Doe"
                             name="surname"
                             value="{{ params.surname }}"
+                        >
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="form-group">
+                        <label for="days">Days</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="days"
+                            placeholder="365"
+                            name="days"
+                            value="{{ params.days }}"
                         >
                     </div>
                 </div>
