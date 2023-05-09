@@ -3,7 +3,7 @@
 {% block page_title %}Add Certificate Sign Request{% endblock page_title %}
 
 {% block content %}
-<div class="card card-default col-5 offset-3">
+<div class="card card-default col-6 offset-3">
     <div class="card-body">
         {% if error %}
         <p class="text-danger">{{ error }}</p>
@@ -58,7 +58,7 @@
             <div class="row">
                 <div class="col-6">
                     <div class="form-group">
-                        <label for="path_length">Path length (for ca)</label>
+                        <label for="path_length">Path length</label>
                         <input
                             type="text"
                             class="form-control"
@@ -77,6 +77,30 @@
                             {% if ca %}checked{% endif %}
                         >
                         <label class="form-check-label" for="ca">Is CA</label>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="CRLDistributionPoints">CRL Distribution points</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="CRLDistributionPoints"
+                            placeholder="https://crl.example.com/ca.crl"
+                            name="CRLDistributionPoints"
+                            value="{{ params.CRLDistributionPoints }}"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="CRLDistributionPoints">Authority Information Access (OCSP)</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="AuthorityInformationAccess"
+                            placeholder="https://ocsp.example.com/ca"
+                            name="AuthorityInformationAccess"
+                            value="{{ params.AuthorityInformationAccess }}"
+                        >
                     </div>
                 </div>
             </div>

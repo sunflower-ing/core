@@ -238,6 +238,40 @@ def make_cert(
                 critical=True,
             )
 
+    if data.get("CRLDistributionPoints"):
+        cert = cert.add_extension(
+            x509.CRLDistributionPoints(
+                [
+                    x509.DistributionPoint(
+                        [
+                            x509.UniformResourceIdentifier(
+                                data.get("CRLDistributionPoints")
+                            )
+                        ],
+                        relative_name=None,
+                        reasons=None,
+                        crl_issuer=None,
+                    )
+                ]
+            ),
+            critical=False,
+        )
+
+    if data.get("AuthorityInformationAccess"):
+        cert = cert.add_extension(
+            x509.AuthorityInformationAccess(
+                [
+                    x509.AccessDescription(
+                        x509.oid.AuthorityInformationAccessOID.OCSP,
+                        x509.UniformResourceIdentifier(
+                            data.get("AuthorityInformationAccess")
+                        ),
+                    )
+                ]
+            ),
+            critical=False,
+        )
+
     cert = cert.sign(private_key=ca_key, algorithm=hashes.SHA512())
 
     return cert

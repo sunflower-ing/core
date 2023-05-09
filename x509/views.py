@@ -75,10 +75,12 @@ def csr_new(request):
             "givenName": request.POST.get("givenName", ""),
             "surname": request.POST.get("surname", ""),
             # Others
-            "issuerDN": bool(
-                request.POST.get("issuerDN", False)
-            ),
+            "issuerDN": bool(request.POST.get("issuerDN", False)),
             "days": int(request.POST.get("days", 365)),
+            "CRLDistributionPoints": request.POST.get("CRLDistributionPoints"),
+            "AuthorityInformationAccess": request.POST.get(
+                "AuthorityInformationAccess"
+            ),
         },
     }
 
