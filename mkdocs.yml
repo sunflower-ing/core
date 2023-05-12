@@ -2,8 +2,8 @@
 site_name: sunflower
 site_description: 'A Sunflower docs'
 docs_dir: docs
-repo_name: 'xom4ek/mkdocs-test'
-repo_url: 'https://github.com/xom4ek/mkdocs-test'
+repo_name: 'AmazeIT/sunflower'
+repo_url: 'https://github.com/AmazeIT/sunflower'
 theme:
     name: material
     locale: ru
