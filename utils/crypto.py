@@ -27,6 +27,8 @@ ENDUSER_DN = {
 
 DISTINGUISHED_NAME = LOCALITY_DN | ORGANIZATION_DN | ENDUSER_DN
 
+REVOCATION_REASONS = {reason.name: reason.value for reason in x509.ReasonFlags}
+
 
 def _read_pkcs12(
     path: pathlib.Path, password: bytes = None
@@ -283,3 +285,48 @@ def cert_to_pem(cert: x509.Certificate) -> bytes:
 
 def cert_from_pem(cert_pem: bytes) -> x509.Certificate:
     return x509.load_pem_x509_certificate(cert_pem)
+
+
+def make_crl(
+    ca_cert,
+    ca_key,
+    certificates_list: list[(x509.Certificate, str, datetime.datetime)] = None,
+) -> x509.CertificateRevocationList:
+    crl = (
+        x509.CertificateRevocationListBuilder()
+        .issuer_name(ca_cert.subject)
+        .last_update(datetime.datetime.now())
+        .next_update(datetime.datetime.now() + datetime.timedelta(1, 0, 0))
+        # TODO: move next_update delta to config
+    )
+
+    if certificates_list:
+        for cert, reason, date in certificates_list:
+            revoked_cert = (
+                x509.RevokedCertificateBuilder()
+                .serial_number(cert.serial_number)
+                .revocation_date(date)
+                .add_extension(x509.CRLReason(reason), critical=False)
+            ).build()
+
+            crl = crl.add_revoked_certificate(revoked_cert)
+
+    crl = crl.sign(private_key=ca_key, algorithm=hashes.SHA256())
+
+    return crl
+
+
+def crl_to_pem(crl: x509.CertificateRevocationList) -> bytes:
+    return crl.public_bytes(serialization.Encoding.PEM)
+
+
+def crl_to_der(crl: x509.CertificateRevocationList) -> bytes:
+    return crl.public_bytes(serialization.Encoding.DER)
+
+
+def crl_from_pem(crl_pem: bytes) -> x509.CertificateRevocationList:
+    return x509.load_pem_x509_crl(crl_pem)
+
+
+def crl_from_der(crl_der: bytes) -> x509.CertificateRevocationList:
+    return x509.load_der_x509_crl(crl_der)

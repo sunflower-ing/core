@@ -38,7 +38,7 @@
             <div class="card-header">
                 {% if not csr.signed %}
                 <div class="card-tools">
-                    <a href="" class="btn btn-sm btn-danger">
+                    <a href="{% url 'x509:certificate_revoke' certificate_id=certificate.id %}" class="btn btn-sm btn-danger">
                         <i class="fas fa-trash"></i> Revoke
                     </a>
                 </div>

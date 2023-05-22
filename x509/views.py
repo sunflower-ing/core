@@ -1,6 +1,15 @@
-from django.shortcuts import redirect, render
 import uuid
-from .models import ALGO_CHOICES, CSR, LENGTH_CHOICES, Key, Certificate
+
+from django.shortcuts import redirect, render
+
+from .models import (
+    ALGO_CHOICES,
+    CSR,
+    LENGTH_CHOICES,
+    REVOCATION_CHOICES,
+    Certificate,
+    Key,
+)
 
 
 def keys_list(request):
@@ -147,3 +156,16 @@ def certificate_new(request):
             ctx.update({"error": str(e)})
 
     return render(request, "x509/cert_new.html", ctx)
+
+
+def certificate_revoke(request, certificate_id):
+    certificate = Certificate.objects.get(id=certificate_id)
+    ctx = {"certificate": certificate, "reason_options": REVOCATION_CHOICES}
+
+    if request.POST:
+        certificate.revoke()
+        return redirect(
+            "x509:certificate_detail", certificate_id=certificate_id.id
+        )
+
+    return render(request, "x509/cert_revoke.html", ctx)
