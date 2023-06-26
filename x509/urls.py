@@ -22,4 +22,5 @@ urlpatterns = [
     path('csrs/', views.csr_list, name='csrs_list'),
     path('csrs/<int:csr_id>', views.csr_detail, name='csr_detail'),
     path('csrs/new', views.csr_new, name='csr_new'),
+    path('crls/<str:ca_slug>', views.crl, name='crl_detail'),
 ]

@@ -2,7 +2,9 @@ import datetime
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 from utils.crypto import (
     REVOCATION_REASONS,
@@ -40,6 +42,10 @@ LENGTH_CHOICES = (
 REVOCATION_CHOICES = tuple(
     (value, key) for (key, value) in REVOCATION_REASONS.items()
 )
+
+
+def get_hosts():
+    return list(filter(lambda h: h != "*", settings.ALLOWED_HOSTS))
 
 
 class Key(models.Model):
@@ -84,6 +90,10 @@ class CSR(models.Model):
     key = models.ForeignKey(to=Key, on_delete=models.RESTRICT)
 
     name = models.CharField(verbose_name="Internal name", max_length=255)
+    slug = models.SlugField(
+        verbose_name="Slug", max_length=255, unique=True, blank=True
+    )
+
     body = models.TextField(verbose_name="CSR", blank=True)
     params = models.JSONField(verbose_name="Certificate params", blank=True)
     ca = models.BooleanField(verbose_name="CA", default=False)
@@ -100,6 +110,21 @@ class CSR(models.Model):
         return self.name
 
     def save(self, *args, **kwargs) -> None:
+        self.slug = slugify(self.name, allow_unicode=True)
+
+        if self.ca:
+            if not self.params.get("CRLDistributionPoints"):
+                self.params["CRLDistributionPoints"] = []
+                for host in get_hosts():
+                    self.params["CRLDistributionPoints"].append(
+                        f"{host}/{self.slug}"
+                    )
+
+            if not self.params.get("AuthorityInformationAccess"):
+                self.params["AuthorityInformationAccess"] = []
+                for host in get_hosts():
+                    self.params["AuthorityInformationAccess"].append(host)
+
         csr_object = make_csr(self.key.private_as_object(), self.params)
         self.body = csr_to_pem(csr_object).decode()
         self.key.used = True

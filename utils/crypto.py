@@ -241,25 +241,29 @@ def make_cert(
             )
 
     if data.get("CRLDistributionPoints"):
+        if not isinstance(data.get("CRLDistributionPoints"), list):
+            data["CRLDistributionPoints"] = [data.get("CRLDistributionPoints")]
+
+        crl_dp = []
+        for item in data.get("CRLDistributionPoints"):
+            crl_dp.append(
+                x509.DistributionPoint(
+                    [x509.UniformResourceIdentifier(item)],
+                    relative_name=None,
+                    reasons=None,
+                    crl_issuer=None,
+                )
+            )
         cert = cert.add_extension(
-            x509.CRLDistributionPoints(
-                [
-                    x509.DistributionPoint(
-                        [
-                            x509.UniformResourceIdentifier(
-                                data.get("CRLDistributionPoints")
-                            )
-                        ],
-                        relative_name=None,
-                        reasons=None,
-                        crl_issuer=None,
-                    )
-                ]
-            ),
-            critical=False,
+            x509.CRLDistributionPoints(crl_dp), critical=False
         )
 
     if data.get("AuthorityInformationAccess"):
+        if not isinstance(data.get("AuthorityInformationAccess"), list):
+            data["AuthorityInformationAccess"] = [
+                data.get("AuthorityInformationAccess")
+            ]
+
         cert = cert.add_extension(
             x509.AuthorityInformationAccess(
                 [

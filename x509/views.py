@@ -1,9 +1,11 @@
 import uuid
 
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
 from .models import (
     ALGO_CHOICES,
+    CRL,
     CSR,
     LENGTH_CHOICES,
     REVOCATION_CHOICES,
@@ -169,3 +171,8 @@ def certificate_revoke(request, certificate_id):
         )
 
     return render(request, "x509/cert_revoke.html", ctx)
+
+
+def crl(request, ca_slug):
+    crl = CRL.objects.filter(ca__csr__slug=ca_slug).first()
+    return HttpResponse(crl.body)
