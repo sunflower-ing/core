@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: staging
-      url: https://stage.sunflower3455.com
+      url: https://stage.teleport.sunflower3455.com
     steps:
 
       - name: Checkout code

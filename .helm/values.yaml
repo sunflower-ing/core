@@ -11,7 +11,7 @@ postgresql:
 
 application:
   migrate:
-    enabled: false
+    enabled: true
 
   configs:
     DB_ENGINE: django.db.backends.postgresql
