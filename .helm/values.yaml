@@ -160,7 +160,7 @@ docs:
     port: 80
 
   ingress:
-    enabled: true
+    enabled: false
     className: ""
     annotations:
       external-dns.kubernetes.io/class: cloudflare
