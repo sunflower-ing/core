@@ -1,7 +1,7 @@
 configVersion: 1
 project: sunflower
 ---
-image: ~
+image: application
 dockerfile: Dockerfile
 ---
 image: docs
