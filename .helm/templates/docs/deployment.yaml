@@ -1,16 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "sunflower.fullname" . }}
+  name: {{ include "sunflower.fullname" . }}-docs
   labels:
-    {{- include "sunflower.labels" . | nindent 4 }}
+    {{- include "sunflower.labels.docs" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: {{ .Values.docs.replicaCount }}
   selector:
     matchLabels:
-      {{- include "sunflower.selectorLabels" . | nindent 6 }}
+      {{- include "sunflower.selectorLabels.docs" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,28 +16,28 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "sunflower.selectorLabels" . | nindent 8 }}
+        {{- include "sunflower.selectorLabels.docs" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "sunflower.serviceAccountName" . }}
+      serviceAccountName: {{ include "sunflower.serviceAccountName.docs" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
           envFrom:
           - configMapRef:
-              name: {{ include "sunflower.fullname" . }}
+              name: {{ include "sunflower.fullname" . }}-docs
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           {{- if .Values.werf }}
-          image: "{{ index .Values.werf "nameless_image"}}"
+          image: "{{ index .Values.werf "docs"}}"
           {{- else }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.docs.image.repository }}:{{ .Values.docs.image.tag | default .Chart.AppVersion }}"
           {{- end }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.docs.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 8000
@@ -53,16 +51,16 @@ spec:
               path: /
               port: http
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+            {{- toYaml .Values.docs.resources | nindent 12 }}
+      {{- with .Values.docs.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.docs.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.docs.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

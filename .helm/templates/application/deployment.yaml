@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sunflower.fullname" . }}-application
+  labels:
+    {{- include "sunflower.labels.application" . | nindent 4 }}
+spec:
+  {{- if not .Values.application.autoscaling.enabled }}
+  replicas: {{ .Values.application.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "sunflower.selectorLabels.application" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.application.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sunflower.selectorLabels.application" . | nindent 8 }}
+    spec:
+      {{- with .Values.application.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sunflower.serviceAccountName.application" . }}
+      securityContext:
+        {{- toYaml .Values.application.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          envFrom:
+          - configMapRef:
+              name: {{ include "sunflower.fullname" . }}-application
+          securityContext:
+            {{- toYaml .Values.application.securityContext | nindent 12 }}
+          {{- if .Values.werf }}
+          image: "{{ index .Values.werf "application"}}"
+          {{- else }}
+          image: "{{ .Values.application.image.repository }}:{{ .Values.application.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.application.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.application.resources | nindent 12 }}
+      {{- with .Values.application.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.application.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.application.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
