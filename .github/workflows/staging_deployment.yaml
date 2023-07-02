@@ -24,4 +24,4 @@ jobs:
         env:
           WERF_SECRET_KEY: ${{ secrets.WERF_SECRET_KEY }}
           WERF_SET_ENV_URL: "envUrl=stage.sunflower3455.com"
-          WERF_LOG_DEBUG: "false"
+          WERF_LOG_DEBUG: "true"
