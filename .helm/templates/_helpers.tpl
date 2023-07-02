@@ -87,7 +87,7 @@ Create the name of the service account to use
 */}}
 {{- define "sunflower.serviceAccountName.docs" -}}
 {{- if .Values.docs.serviceAccount.create }}
-{{- default (include "sunflower.fullname" .) .Values.docs.serviceAccount.name }}
+{{- default (include "sunflower.fullname" .) .Values.docs.serviceAccount.name }}-docs
 {{- else }}
 {{- default "default" .Values.docs.serviceAccount.name }}
 {{- end }}
