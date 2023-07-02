@@ -17,7 +17,7 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "sunflower.labels" . | nindent 4 }}
+    {{- include "sunflower.labels.docs" . | nindent 4 }}
   {{- with .Values.docs.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

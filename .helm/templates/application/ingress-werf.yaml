@@ -17,7 +17,7 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "sunflower.labels" . | nindent 4 }}
+    {{- include "sunflower.labels.application" . | nindent 4 }}
   {{- with .Values.application.ingress.annotations }}
   annotations:
     external-dns.kubernetes.io/class: cloudflare
