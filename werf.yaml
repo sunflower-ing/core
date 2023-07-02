@@ -3,3 +3,6 @@ project: sunflower
 ---
 image: ~
 dockerfile: Dockerfile
+---
+image: docs
+dockerfile: docs/Dockerfile
