@@ -1,7 +1,7 @@
 ### [1.0.1-rc.1](https://github.com/AmazeIT/sunflower/compare/v1.0.0...v1.0.1-rc.1) (2023-07-02)
 
 
-### :scissors: Refactor
+### 💈  Refactor
 
 * add docs to helm chart ([6788b37](https://github.com/AmazeIT/sunflower/commit/6788b3751550a85d3c424ec8f7878dbe2733a979))
 
@@ -35,7 +35,7 @@
 ## [1.0.0](https://github.com/AmazeIT/sunflower/compare/...v1.0.0) (2023-05-01)
 
 
-### :scissors: Refactor
+### 💈  Refactor
 
 * pass precommits ([a29508a](https://github.com/AmazeIT/sunflower/commit/a29508acba2173b4102882eb281127425c0345fc))
 
@@ -59,7 +59,7 @@
 ## [1.0.0-rc.1](https://github.com/AmazeIT/sunflower/compare/...v1.0.0-rc.1) (2023-04-26)
 
 
-### :scissors: Refactor
+### 💈  Refactor
 
 * pass precommits ([a29508a](https://github.com/AmazeIT/sunflower/commit/a29508acba2173b4102882eb281127425c0345fc))
 

@@ -86,12 +86,12 @@ generateNotes:
         - type: 'perf'
           section: '⏩ Performance'
         - type: 'refactor'
-          section: ':scissors: Refactor'
+          section: ':scissors:Refactor'
           hidden: false
         - type: 'revert'
           section: '🙅‍♂️ Reverts'
         - type: 'style'
-          section: '💈 Style'
+          section: ':scissors:Style'
           hidden: true
         - type: 'test'
           section: '🧪 Tests'
