@@ -1,11 +1,22 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "sunflower.fullname" . }}
+  name: {{ include "sunflower.fullname" . }}-application
   labels:
-    {{- include "sunflower.labels" . | nindent 4 }}
+    {{- include "sunflower.labels.application" . | nindent 4 }}
 data:
-{{- range $conf_key,$conf_value := .Values.configs }}
+{{- range $conf_key,$conf_value := .Values.application.configs }}
   {{ $conf_key  }}: {{ $conf_value | quote }}
 {{- end}}
   DB_HOST: {{ .Release.Name }}-postgresql
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sunflower.fullname" . }}-docs
+  labels:
+    {{- include "sunflower.labels.docs" . | nindent 4 }}
+data:
+{{- range $conf_key,$conf_value := .Values.docs.configs }}
+  {{ $conf_key  }}: {{ $conf_value | quote }}
+{{- end}}
