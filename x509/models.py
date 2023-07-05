@@ -11,6 +11,7 @@ from utils.crypto import (
     cert_from_pem,
     cert_to_pem,
     crl_from_pem,
+    crl_to_der,
     crl_to_pem,
     csr_from_pem,
     csr_to_pem,
@@ -70,6 +71,9 @@ class Key(models.Model):
 
     used = models.BooleanField(verbose_name="Used", default=False)
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self) -> str:
         return f"{self.name} {self.algo}({self.length})"
 
@@ -105,6 +109,9 @@ class CSR(models.Model):
     )
 
     signed = models.BooleanField(verbose_name="Signed", default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self) -> str:
         return self.name
@@ -145,7 +152,7 @@ class Certificate(models.Model):
         to="self", on_delete=models.RESTRICT, null=True, blank=True
     )
 
-    body = models.TextField(verbose_name="Certificate")
+    body = models.TextField(verbose_name="Certificate", blank=True)
     created_at = models.DateTimeField(
         verbose_name="Created at", auto_now_add=True
     )
@@ -161,6 +168,9 @@ class Certificate(models.Model):
     revoked_at = models.DateTimeField(
         verbose_name="Revoked at", null=True, blank=True
     )
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self) -> str:
         return self.csr.name
@@ -229,7 +239,7 @@ class CRL(models.Model):
     def save(self, *args, **kwargs) -> None:
         if self._state.adding is True:
             crl_object = make_crl(
-                self.ca.csr.key.private_as_object(), self.ca.as_object()
+                self.ca.as_object(), self.ca.csr.key.private_as_object()
             )
 
         else:
@@ -242,8 +252,8 @@ class CRL(models.Model):
                 )
 
             crl_object = make_crl(
-                self.ca.csr.key.private_as_object(),
                 self.ca.as_object(),
+                self.ca.csr.key.private_as_object(),
                 revoked_certs,
             )
 
@@ -256,3 +266,9 @@ class CRL(models.Model):
 
     def as_object(self) -> x509.CertificateRevocationList:
         return crl_from_pem(self.body.encode())
+
+    def as_pem(self) -> str:
+        return self.body
+
+    def as_der(self) -> bytes:
+        return crl_to_der(self.as_object())

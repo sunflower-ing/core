@@ -149,12 +149,14 @@ def make_cert(
         x509_names = []
 
         for dn_key, dn_value in (LOCALITY_DN | ORGANIZATION_DN).items():
-            x509_names.append(
-                x509.NameAttribute(
-                    DISTINGUISHED_NAME[dn_key],
-                    ca_cert.subject.get_attributes_for_oid(dn_value),
-                )
-            )
+            attrs = ca_cert.subject.get_attributes_for_oid(dn_value)
+            if attrs:
+                for attr in attrs:
+                    x509_names.append(
+                        x509.NameAttribute(
+                            DISTINGUISHED_NAME[dn_key], attr.value
+                        )
+                    )
 
         for dn_key, dn_value in data.items():
             if dn_value and ENDUSER_DN.get(dn_key):
@@ -310,7 +312,10 @@ def make_crl(
                 x509.RevokedCertificateBuilder()
                 .serial_number(cert.serial_number)
                 .revocation_date(date)
-                .add_extension(x509.CRLReason(reason), critical=False)
+                .add_extension(
+                    x509.CRLReason(getattr(x509.ReasonFlags, reason)),
+                    critical=False,
+                )
             ).build()
 
             crl = crl.add_revoked_certificate(revoked_cert)

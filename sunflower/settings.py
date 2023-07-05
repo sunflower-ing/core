@@ -41,12 +41,13 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
 INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'x509.apps.X509Config',
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

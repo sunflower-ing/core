@@ -1,14 +1,13 @@
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
 from django.urls import include, path
 
-from core import views
+from x509.urls import router as x509_router
+from x509.views import crl
 
 urlpatterns = [
-    path('', views.index, name="index"),
-    path('login/', views.login_view, name="login_view"),
-    path('logout/', views.logout_view, name="logout_view"),
-    path('x509/', include('x509.urls')),
-    path('admin/', admin.site.urls),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path(
+        "v1/api-auth/",
+        include("rest_framework.urls", namespace="restframework"),
+    ),
+    path("v1/api/x509/", include(x509_router.urls)),
+    path("crl/<str:ca_slug>.<str:format>", crl, name="crl"),
+]

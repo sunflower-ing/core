@@ -9,6 +9,9 @@ passlib = {extras = ["bcrypt"], version = "*"}
 django = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
 
 [dev-packages]
 pytest = "*"
