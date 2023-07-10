@@ -92,7 +92,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
         )
         if serializer.is_valid():
             instance = serializer.save()
-            if serializer.data.get("ca"):
+            if instance.csr.ca:
                 crl = CRL(ca=instance)
                 crl.save()
             return Response(

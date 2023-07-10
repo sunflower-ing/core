@@ -1,3 +1,9 @@
 from django.db import models
 
-# Create your models here.
+
+class Source(models.Model):
+    pass
+
+
+class RequestLog(models.Model):
+    pass

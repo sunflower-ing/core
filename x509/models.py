@@ -78,9 +78,10 @@ class Key(models.Model):
         return f"{self.name} {self.algo}({self.length})"
 
     def save(self, *args, **kwargs) -> None:
-        private_key, public_key = make_keys(self.algo, self.length)
-        self.private = key_to_pem(private_key, private=True).decode()
-        self.public = key_to_pem(public_key).decode()
+        if self._state.adding is True:
+            private_key, public_key = make_keys(self.algo, self.length)
+            self.private = key_to_pem(private_key, private=True).decode()
+            self.public = key_to_pem(public_key).decode()
         return super().save(*args, **kwargs)
 
     def private_as_object(self) -> rsa.RSAPrivateKey | dsa.DSAPrivateKey:
@@ -132,7 +133,10 @@ class CSR(models.Model):
                 for host in get_hosts():
                     self.params["AuthorityInformationAccess"].append(host)
 
-        csr_object = make_csr(self.key.private_as_object(), self.params)
+        data: dict = self.params
+        data.update({"ca": self.ca, "path_length": self.path_length})
+
+        csr_object = make_csr(self.key.private_as_object(), data)
         self.body = csr_to_pem(csr_object).decode()
         self.key.used = True
         self.key.save()
@@ -152,6 +156,9 @@ class Certificate(models.Model):
         to="self", on_delete=models.RESTRICT, null=True, blank=True
     )
 
+    sn = models.BigIntegerField(
+        verbose_name="Serial number", null=True, blank=True
+    )
     body = models.TextField(verbose_name="Certificate", blank=True)
     created_at = models.DateTimeField(
         verbose_name="Created at", auto_now_add=True
@@ -196,6 +203,7 @@ class Certificate(models.Model):
                     issuer_dn=self.csr.params.get("issuerDN"),
                 )
             self.body = cert_to_pem(cert_object).decode()
+            self.sn = cert_object.serial_number
             self.csr.signed = True
             self.csr.save()
 

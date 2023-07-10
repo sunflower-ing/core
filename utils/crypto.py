@@ -1,10 +1,13 @@
 import datetime
+import os
 import pathlib
+import sys
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.x509 import ocsp
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 LOCALITY_DN = {
@@ -35,6 +38,10 @@ def _read_pkcs12(
 ) -> pkcs12.PKCS12KeyAndCertificates | None:
     with open(path, "rb") as fd:
         return pkcs12.load_pkcs12(data=fd.read(), password=password)
+
+
+def _random_serial(length: int = 8) -> int:
+    return int.from_bytes(os.urandom(length), byteorder=sys.byteorder)
 
 
 def make_keys(
@@ -108,7 +115,7 @@ def make_csr(
         x509.Name(x509_names)
     )
 
-    signed_csr = csr.sign(private_key, hashes.SHA512())
+    signed_csr = csr.sign(private_key, hashes.SHA256())
 
     return signed_csr
 
@@ -133,7 +140,7 @@ def make_cert(
         x509.CertificateBuilder()
         .public_key(csr.public_key())
         # .subject_name(csr.subject)
-        .serial_number(x509.random_serial_number())
+        .serial_number(_random_serial())
         .not_valid_before(datetime.datetime.utcnow())
         .not_valid_after(
             datetime.datetime.utcnow()
@@ -179,24 +186,30 @@ def make_cert(
             data.path_length = 1
             # TODO: Get from parent and decrease
 
-        cert = cert.add_extension(
-            x509.BasicConstraints(
-                ca=True, path_length=data.get("path_length")
-            ),
-            critical=True,
-        ).add_extension(
-            x509.KeyUsage(
-                key_cert_sign=True,
-                crl_sign=True,
-                digital_signature=False,
-                key_encipherment=False,
-                data_encipherment=False,
-                key_agreement=False,
-                content_commitment=False,
-                encipher_only=False,
-                decipher_only=False,
-            ),
-            critical=True,
+        cert = (
+            cert.add_extension(
+                x509.BasicConstraints(
+                    ca=True, path_length=data.get("path_length")
+                ),
+                critical=True,
+            )
+            .add_extension(
+                x509.KeyUsage(
+                    key_cert_sign=True,
+                    crl_sign=True,
+                    digital_signature=False,
+                    key_encipherment=False,
+                    data_encipherment=False,
+                    key_agreement=False,
+                    content_commitment=False,
+                    encipher_only=False,
+                    decipher_only=False,
+                ),
+                critical=True,
+            )
+            .add_extension(
+                x509.ExtendedKeyUsage(([ExtendedKeyUsageOID.OCSP_SIGNING]))
+            )
         )
 
     else:
@@ -280,7 +293,7 @@ def make_cert(
             critical=False,
         )
 
-    cert = cert.sign(private_key=ca_key, algorithm=hashes.SHA512())
+    cert = cert.sign(private_key=ca_key, algorithm=hashes.SHA256())
 
     return cert
 
@@ -339,3 +352,45 @@ def crl_from_pem(crl_pem: bytes) -> x509.CertificateRevocationList:
 
 def crl_from_der(crl_der: bytes) -> x509.CertificateRevocationList:
     return x509.load_der_x509_crl(crl_der)
+
+
+def read_ocsp_request(data: bytes) -> dict:  # TODO: Make a typed object
+    req = ocsp.load_der_ocsp_request(data)
+    return {
+        "issuer_key_hash": req.issuer_key_hash.hex(),
+        "issuer_name_hash": req.issuer_name_hash.hex(),
+        "hash_algorithm": req.hash_algorithm.name,
+        "serial_number": req.serial_number,
+        "extensions": [{ext.oid._name: ext.value} for ext in req.extensions],
+    }
+
+
+def create_ocsp_response(
+    cert: x509.Certificate,
+    issuer: x509.Certificate,
+    cert_status: ocsp.OCSPCertStatus,
+    responder_cert: x509.Certificate,
+    responder_key: rsa.RSAPrivateKey | dsa.DSAPrivateKey,
+    revocation_time: datetime.datetime = None,
+    revocation_reason: str = None,
+) -> ocsp.OCSPResponse:
+    builder = ocsp.OCSPResponseBuilder()
+    builder = builder.add_response(
+        cert=cert,
+        issuer=issuer,
+        algorithm=hashes.SHA256(),  # For compatibility reasons
+        cert_status=cert_status,
+        this_update=datetime.datetime.now(),
+        next_update=datetime.datetime.now(),
+        revocation_time=revocation_time,
+        revocation_reason=getattr(x509.ReasonFlags, revocation_reason)
+        if revocation_reason
+        else None,
+    ).responder_id(ocsp.OCSPResponderEncoding.HASH, responder_cert)
+
+    response = builder.sign(responder_key, hashes.SHA256())
+    return response
+
+
+def ocsp_response_to_der(response: ocsp.OCSPResponse) -> bytes:
+    return response.public_bytes(serialization.Encoding.DER)

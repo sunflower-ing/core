@@ -108,6 +108,7 @@ class CertificateSerialiser(serializers.HyperlinkedModelSerializer):
         model = Certificate
         fields = (
             "id",
+            "sn",
             "csr",
             "parent",
             "subject",
@@ -117,4 +118,4 @@ class CertificateSerialiser(serializers.HyperlinkedModelSerializer):
             "revocation_reason",
             "body",
         )
-        read_only_fields = ["subject"]
+        read_only_fields = ["subject", "sn"]
