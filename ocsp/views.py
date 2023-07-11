@@ -1,6 +1,7 @@
 from cryptography.x509 import ocsp
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import permissions, viewsets
 
 from utils.crypto import (
     create_ocsp_response,
@@ -9,9 +10,14 @@ from utils.crypto import (
 )
 from x509.models import Certificate
 
+from .models import RequestLog, Source
+from .serializers import RequestLogSerializer, SourceSerializer
+
 
 @csrf_exempt
 def ocsp_view(request):
+    print(f"REMOTE_ADDR: {request.META.get('REMOTE_ADDR')}")
+    print(f"REMOTE_HOST: {request.META.get('REMOTE_HOST')}")
     if request.method == "POST":
         req_data = read_ocsp_request(request.body)
         try:
@@ -35,6 +41,13 @@ def ocsp_view(request):
                     revocation_reason=cert.revocation_reason,
                 )
 
+            log = RequestLog(
+                cert=cert,
+                host=request.META.get('REMOTE_HOST'),
+                addr=request.META.get('REMOTE_ADDR'),
+            )
+            log.save()
+
             return HttpResponse(ocsp_response_to_der(response))
 
         except Certificate.DoesNotExist:
@@ -47,3 +60,17 @@ def ocsp_view(request):
         ocsp.OCSPResponseStatus.MALFORMED_REQUEST
     )
     return HttpResponse(ocsp_response_to_der(response))
+
+
+class SourceViewSet(viewsets.ModelViewSet):
+    queryset = Source.objects.all()
+    serializer_class = SourceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class RequestLogViewSet(viewsets.ModelViewSet):
+    queryset = RequestLog.objects.all()
+    serializer_class = RequestLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    http_method_names = ["get"]

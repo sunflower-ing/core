@@ -62,11 +62,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
     serializer_class = CertificateSerialiser
     permission_classes = [permissions.IsAuthenticated]
 
-    def destroy(self, request, *args, **kwargs):
-        return Response(
-            data={"detail": "Method not allowed for Certificate instance"},
-            status=status.HTTP_405_METHOD_NOT_ALLOWED,
-        )
+    http_method_names = ["get", "post", "put"]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -104,7 +100,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
             )
 
 
-def crl(_, ca_slug, format: str = "crl"):
+def crl_view(request, ca_slug, format: str = "crl"):
     crl = CRL.objects.filter(ca__csr__slug=ca_slug).first()
     if format == "crt":
         return HttpResponse(crl.as_der())

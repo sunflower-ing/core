@@ -40,7 +40,7 @@ def _read_pkcs12(
         return pkcs12.load_pkcs12(data=fd.read(), password=password)
 
 
-def _random_serial(length: int = 8) -> int:
+def _random_serial(length: int = 7) -> int:
     return int.from_bytes(os.urandom(length), byteorder=sys.byteorder)
 
 
