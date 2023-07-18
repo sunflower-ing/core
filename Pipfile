@@ -13,6 +13,8 @@ djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
 djangorestframework-simplejwt = {extras = ["crypto"], version = "*"}
+celery = "*"
+redis = "*"
 
 [dev-packages]
 pytest = "*"

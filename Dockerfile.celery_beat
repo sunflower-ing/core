@@ -1,0 +1,21 @@
+FROM python:3.10.11-alpine3.17
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apk update \
+    && apk --no-cache add postgresql-dev python3-dev musl-dev gcc linux-headers build-base pkgconfig \
+    && rm -rf /var/cache/apk/*
+
+COPY ./requirements.txt /tmp/requirements.txt
+
+RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
+
+COPY . /sunflower
+WORKDIR /sunflower
+
+ENV PYTHONPATH=/sunflower
+
+EXPOSE 8080
+
+CMD ["python", "-m", "celery", "-A", "sunflower", "beat", "-l", "info"]
