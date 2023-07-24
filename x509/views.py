@@ -31,7 +31,7 @@ class KeyViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.CREATE,
             entity="KEY",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return super().create(request, *args, **kwargs)
 
@@ -48,7 +48,7 @@ class KeyViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.UPDATE,
             entity="KEY",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return super().update(request, *args, **kwargs)
 
@@ -65,7 +65,7 @@ class KeyViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.DESTROY,
             entity="KEY",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return super().destroy(request, *args, **kwargs)
 
@@ -75,7 +75,7 @@ class KeyViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.RETRIEVE,
             entity="KEY",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().retrieve(request, *args, **kwargs)
 
@@ -85,7 +85,6 @@ class KeyViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.LIST,
             entity="KEY",
-            description="",
         )
         return super().list(request, *args, **kwargs)
 
@@ -112,7 +111,7 @@ class CSRViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.CREATE,
             entity="CSR",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
@@ -129,7 +128,7 @@ class CSRViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.UPDATE,
             entity="CSR",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return super().update(request, *args, **kwargs)
 
@@ -149,7 +148,7 @@ class CSRViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.DESTROY,
             entity="CSR",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return super().destroy(request, *args, **kwargs)
 
@@ -159,7 +158,7 @@ class CSRViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.RETRIEVE,
             entity="CSR",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().retrieve(request, *args, **kwargs)
 
@@ -169,7 +168,6 @@ class CSRViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.LIST,
             entity="CSR",
-            description="",
         )
         return super().list(request, *args, **kwargs)
 
@@ -196,7 +194,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
                 module=Modules.X509,
                 action=Actions.CREATE,
                 entity="CERTIFICATE",
-                description=f"{instance.pk}",
+                object_id=instance.pk,
             )
             return Response(
                 data=serializer.data, status=status.HTTP_201_CREATED
@@ -226,7 +224,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.UPDATE,
             entity="CERTIFICATE",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return Response(data=request.data, status=status.HTTP_200_OK)
 
@@ -236,7 +234,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.RETRIEVE,
             entity="CERTIFICATE",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().retrieve(request, *args, **kwargs)
 
@@ -246,7 +244,6 @@ class CertificateViewSet(viewsets.ModelViewSet):
             module=Modules.X509,
             action=Actions.LIST,
             entity="CERTIFICATE",
-            description="",
         )
         return super().list(request, *args, **kwargs)
 

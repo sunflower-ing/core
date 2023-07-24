@@ -1,8 +1,10 @@
 from django.contrib.auth.models import User, Permission, Group
 from rest_framework import serializers
 
+from .models import LogEntry
 
-class SystemUserSerializer(serializers.HyperlinkedModelSerializer):
+
+class SystemUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
@@ -28,7 +30,13 @@ class SystemPermissionSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "content_type", "codename")
 
 
-class SystemGroupSerializer(serializers.HyperlinkedModelSerializer):
+class SystemGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ("id", "name", "permissions")
+
+
+class SystemLogEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogEntry
+        fields = "__all__"

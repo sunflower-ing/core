@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import (
 
 from core.views import (
     SystemGroupViewSet,
+    SystemLogEntryViewSet,
     SystemPermissionViewSet,
     SystemUserViewSet,
     index,
@@ -24,6 +25,7 @@ router.register(r"ocsp/logs", RequestLogViewSet)
 router.register(r"system/users", SystemUserViewSet)
 router.register(r"system/groups", SystemGroupViewSet)
 router.register(r"system/permissions", SystemPermissionViewSet)
+router.register(r"system/logs", SystemLogEntryViewSet)
 
 
 urlpatterns = [

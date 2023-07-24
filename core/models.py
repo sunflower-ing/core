@@ -16,7 +16,7 @@ class Actions(models.TextChoices):
     DESTROY = "DELETE", "Delete"
 
 
-class LogRecord(models.Model):
+class LogEntry(models.Model):
     user = models.ForeignKey(
         to=User, verbose_name="User", on_delete=models.DO_NOTHING
     )
@@ -27,22 +27,27 @@ class LogRecord(models.Model):
         verbose_name="Action", max_length=12, choices=Actions.choices
     )
     entity = models.CharField(verbose_name="Entity", max_length=32)
-    description = models.CharField(verbose_name="Description", max_length=255)
-    created_at = models.DateTimeField(
+    object_id = models.IntegerField(
+        verbose_name="Description", blank=True, null=True
+    )
+    date = models.DateTimeField(
         verbose_name="Created", auto_now_add=True
     )
+
+    class Meta:
+        ordering = ["-date"]
 
     def __str__(self) -> str:
         return f"{self.user.username}: {self.module} -> {self.action}"
 
 
 def log(
-    user: User, module: str, action: str, entity: str, description: str
-) -> LogRecord:
-    return LogRecord.objects.create(
+    user: User, module: str, action: str, entity: str, object_id: int = None
+) -> LogEntry:
+    return LogEntry.objects.create(
         user=user,
         module=module,
         action=action,
         entity=entity,
-        description=description,
+        object_id=object_id,
     )

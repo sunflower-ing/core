@@ -82,7 +82,7 @@ class SourceViewSet(viewsets.ModelViewSet):
             module=Modules.OCSP,
             action=Actions.CREATE,
             entity="SOURCE",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return super().create(request, *args, **kwargs)
 
@@ -92,7 +92,7 @@ class SourceViewSet(viewsets.ModelViewSet):
             module=Modules.OCSP,
             action=Actions.UPDATE,
             entity="SOURCE",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().update(request, *args, **kwargs)
 
@@ -102,7 +102,7 @@ class SourceViewSet(viewsets.ModelViewSet):
             module=Modules.OCSP,
             action=Actions.DESTROY,
             entity="SOURCE",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().destroy(request, *args, **kwargs)
 
@@ -112,7 +112,7 @@ class SourceViewSet(viewsets.ModelViewSet):
             module=Modules.OCSP,
             action=Actions.RETRIEVE,
             entity="SOURCE",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().retrieve(request, *args, **kwargs)
 
@@ -122,7 +122,6 @@ class SourceViewSet(viewsets.ModelViewSet):
             module=Modules.OCSP,
             action=Actions.LIST,
             entity="SOURCE",
-            description="",
         )
         return super().list(request, *args, **kwargs)
 
@@ -140,6 +139,5 @@ class RequestLogViewSet(viewsets.ModelViewSet):
             module=Modules.OCSP,
             action=Actions.LIST,
             entity="REQUEST_LOG",
-            description="",
         )
         return super().list(request, *args, **kwargs)

@@ -3,9 +3,10 @@ from django.http import JsonResponse
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 
-from .models import Actions, Modules, log
+from .models import Actions, LogEntry, Modules, log
 from .serializers import (
     SystemGroupSerializer,
+    SystemLogEntrySerializer,
     SystemPermissionSerializer,
     SystemUserSerializer,
 )
@@ -37,7 +38,7 @@ class SystemUserViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.CREATE,
             entity="USER",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -61,7 +62,7 @@ class SystemUserViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.UPDATE,
             entity="USER",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -71,7 +72,7 @@ class SystemUserViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.DESTROY,
             entity="USER",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().destroy(request, *args, **kwargs)
 
@@ -81,7 +82,7 @@ class SystemUserViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.RETRIEVE,
             entity="USER",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().retrieve(request, *args, **kwargs)
 
@@ -91,7 +92,6 @@ class SystemUserViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.LIST,
             entity="USER",
-            description="",
         )
         return super().list(request, *args, **kwargs)
 
@@ -115,7 +115,7 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.CREATE,
             entity="GROUP",
-            description=f"{instance.pk}",
+            object_id=instance.pk,
         )
         return super().create(request, *args, **kwargs)
 
@@ -125,7 +125,7 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.UPDATE,
             entity="GROUP",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().update(request, *args, **kwargs)
 
@@ -135,7 +135,7 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.DESTROY,
             entity="GROUP",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().destroy(request, *args, **kwargs)
 
@@ -145,7 +145,7 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.RETRIEVE,
             entity="GROUP",
-            description=f"{self.get_object().pk}",
+            object_id=self.get_object().pk,
         )
         return super().retrieve(request, *args, **kwargs)
 
@@ -155,7 +155,6 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
             module=Modules.SYSTEM,
             action=Actions.LIST,
             entity="GROUP",
-            description="",
         )
         return super().list(request, *args, **kwargs)
 
@@ -165,12 +164,30 @@ class SystemPermissionViewSet(viewsets.ModelViewSet):
     serializer_class = SystemPermissionSerializer
     permission_classes = [permissions.IsAdminUser]
 
+    http_method_names = ["get"]
+
     def list(self, request, *args, **kwargs):
         log(
             user=request.user,
             module=Modules.SYSTEM,
             action=Actions.LIST,
             entity="PERMISSION",
-            description="",
+        )
+        return super().list(request, *args, **kwargs)
+
+
+class SystemLogEntryViewSet(viewsets.ModelViewSet):
+    queryset = LogEntry.objects.all()
+    serializer_class = SystemLogEntrySerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    http_method_names = ["get"]
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.LIST,
+            entity="LOG_ENTRY",
         )
         return super().list(request, *args, **kwargs)
