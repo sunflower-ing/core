@@ -1,11 +1,9 @@
-import uuid
-
 from rest_framework import serializers
 
 from .models import CSR, Certificate, Key
 
 
-class KeySerializer(serializers.HyperlinkedModelSerializer):
+class KeySerializer(serializers.ModelSerializer):
     name = serializers.CharField(allow_blank=True)
 
     class Meta:
@@ -20,11 +18,6 @@ class KeySerializer(serializers.HyperlinkedModelSerializer):
             "public",
             "private",
         )
-
-    def create(self, validated_data):
-        if not validated_data.get("name"):
-            validated_data["name"] = str(uuid.uuid4())
-        return super().create(validated_data)
 
 
 EKU_CHOICES = (
@@ -69,11 +62,10 @@ class CSRParamsSerializer(serializers.Serializer):
     )
 
 
-class CSRSerializer(serializers.HyperlinkedModelSerializer):
-    key = serializers.HyperlinkedRelatedField(
+class CSRSerializer(serializers.ModelSerializer):
+    key = serializers.PrimaryKeyRelatedField(
         many=False,
         allow_null=True,
-        view_name="key-detail",
         queryset=Key.objects.all(),
     )
     params = CSRParamsSerializer()
@@ -95,15 +87,8 @@ class CSRSerializer(serializers.HyperlinkedModelSerializer):
         )
         read_only_fields = ["slug", "signed", "subject"]
 
-    def create(self, validated_data):
-        if not validated_data.get("key"):
-            key = Key(name=str(uuid.uuid4()))
-            key.save()
-            validated_data["key"] = key
-        return super().create(validated_data)
 
-
-class CertificateSerialiser(serializers.HyperlinkedModelSerializer):
+class CertificateSerialiser(serializers.ModelSerializer):
     class Meta:
         model = Certificate
         fields = (

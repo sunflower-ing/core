@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions, viewsets
 
+from core.models import Actions, Modules, log
 from utils.crypto import (
     create_ocsp_response,
     ocsp_response_to_der,
@@ -67,6 +68,64 @@ class SourceViewSet(viewsets.ModelViewSet):
     serializer_class = SourceSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        instance = None
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            instance = serializer.instance
+
+        log(
+            user=request.user,
+            module=Modules.OCSP,
+            action=Actions.CREATE,
+            entity="SOURCE",
+            description=f"{instance.pk}",
+        )
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.OCSP,
+            action=Actions.UPDATE,
+            entity="SOURCE",
+            description=f"{self.get_object().pk}",
+        )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.OCSP,
+            action=Actions.DESTROY,
+            entity="SOURCE",
+            description=f"{self.get_object().pk}",
+        )
+        return super().destroy(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.OCSP,
+            action=Actions.RETRIEVE,
+            entity="SOURCE",
+            description=f"{self.get_object().pk}",
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.OCSP,
+            action=Actions.LIST,
+            entity="SOURCE",
+            description="",
+        )
+        return super().list(request, *args, **kwargs)
+
 
 class RequestLogViewSet(viewsets.ModelViewSet):
     queryset = RequestLog.objects.all()
@@ -74,3 +133,13 @@ class RequestLogViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     http_method_names = ["get"]
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.OCSP,
+            action=Actions.LIST,
+            entity="REQUEST_LOG",
+            description="",
+        )
+        return super().list(request, *args, **kwargs)

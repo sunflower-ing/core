@@ -1,6 +1,10 @@
+import uuid
+
 from django.http import HttpResponse
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
+
+from core.models import Actions, Modules, log
 
 from .models import CRL, CSR, Certificate, Key
 from .serializers import CertificateSerialiser, CSRSerializer, KeySerializer
@@ -11,14 +15,25 @@ class KeyViewSet(viewsets.ModelViewSet):
     serializer_class = KeySerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.used:
-            return Response(
-                data={"detail": "Method not allowed for Key in use"},
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
-        return super().destroy(request, *args, **kwargs)
+    def create(self, request, *args, **kwargs):
+        instance = None
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if not serializer.initial_data.get("name"):
+            serializer.initial_data["name"] = str(uuid.uuid4())
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            instance = serializer.instance
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.CREATE,
+            entity="KEY",
+            description=f"{instance.pk}",
+        )
+        return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -27,13 +42,96 @@ class KeyViewSet(viewsets.ModelViewSet):
                 data={"detail": "Method not allowed for Key in use"},
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.UPDATE,
+            entity="KEY",
+            description=f"{instance.pk}",
+        )
         return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.used:
+            return Response(
+                data={"detail": "Method not allowed for Key in use"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.DESTROY,
+            entity="KEY",
+            description=f"{instance.pk}",
+        )
+        return super().destroy(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.RETRIEVE,
+            entity="KEY",
+            description=f"{self.get_object().pk}",
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.LIST,
+            entity="KEY",
+            description="",
+        )
+        return super().list(request, *args, **kwargs)
 
 
 class CSRViewSet(viewsets.ModelViewSet):
     queryset = CSR.objects.all()
     serializer_class = CSRSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        instance = None
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if not serializer.initial_data.get("key"):
+            key = Key.objects.create(name=str(uuid.uuid4()))
+            serializer.initial_data["key"] = key.pk
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            instance = serializer.instance
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.CREATE,
+            entity="CSR",
+            description=f"{instance.pk}",
+        )
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.signed:
+            return Response(
+                data={"detail": "Method not allowed for signed CSR"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.UPDATE,
+            entity="CSR",
+            description=f"{instance.pk}",
+        )
+        return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -45,16 +143,35 @@ class CSRViewSet(viewsets.ModelViewSet):
         else:
             instance.key.used = False
             instance.key.save()  # Free the Key for later use
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.DESTROY,
+            entity="CSR",
+            description=f"{instance.pk}",
+        )
         return super().destroy(request, *args, **kwargs)
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.signed:
-            return Response(
-                data={"detail": "Method not allowed for signed CSR"},
-                status=status.HTTP_406_NOT_ACCEPTABLE,
-            )
-        return super().update(request, *args, **kwargs)
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.RETRIEVE,
+            entity="CSR",
+            description=f"{self.get_object().pk}",
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.LIST,
+            entity="CSR",
+            description="",
+        )
+        return super().list(request, *args, **kwargs)
 
 
 class CertificateViewSet(viewsets.ModelViewSet):
@@ -63,6 +180,31 @@ class CertificateViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     http_method_names = ["get", "post", "put"]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={'request': request}
+        )
+        if serializer.is_valid():
+            instance = serializer.save()
+            if instance.csr.ca:
+                crl = CRL(ca=instance)
+                crl.save()
+
+            log(
+                user=request.user,
+                module=Modules.X509,
+                action=Actions.CREATE,
+                entity="CERTIFICATE",
+                description=f"{instance.pk}",
+            )
+            return Response(
+                data=serializer.data, status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -78,26 +220,35 @@ class CertificateViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         instance.revoke(request.data.get("reason"))
-        return Response(
-            data=request.data, status=status.HTTP_200_OK
-        )
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(
-            data=request.data, context={'request': request}
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.UPDATE,
+            entity="CERTIFICATE",
+            description=f"{instance.pk}",
         )
-        if serializer.is_valid():
-            instance = serializer.save()
-            if instance.csr.ca:
-                crl = CRL(ca=instance)
-                crl.save()
-            return Response(
-                data=serializer.data, status=status.HTTP_201_CREATED
-            )
-        else:
-            return Response(
-                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(data=request.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.RETRIEVE,
+            entity="CERTIFICATE",
+            description=f"{self.get_object().pk}",
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.LIST,
+            entity="CERTIFICATE",
+            description="",
+        )
+        return super().list(request, *args, **kwargs)
 
 
 def crl_view(request, ca_slug, format: str = "crl"):
