@@ -6,7 +6,12 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
-from core.views import index, SystemUserViewSet
+from core.views import (
+    SystemGroupViewSet,
+    SystemPermissionViewSet,
+    SystemUserViewSet,
+    index,
+)
 from ocsp.views import RequestLogViewSet, SourceViewSet, ocsp_view
 from x509.views import CertificateViewSet, CSRViewSet, KeyViewSet, crl_view
 
@@ -17,6 +22,8 @@ router.register(r"x509/certs", CertificateViewSet)
 router.register(r"ocsp/sources", SourceViewSet)
 router.register(r"ocsp/logs", RequestLogViewSet)
 router.register(r"system/users", SystemUserViewSet)
+router.register(r"system/groups", SystemGroupViewSet)
+router.register(r"system/permissions", SystemPermissionViewSet)
 
 
 urlpatterns = [

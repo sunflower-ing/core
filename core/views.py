@@ -1,9 +1,13 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, Permission, User
 from django.http import JsonResponse
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 
-from .serializers import SystemUserSerializer
+from .serializers import (
+    SystemGroupSerializer,
+    SystemPermissionSerializer,
+    SystemUserSerializer,
+)
 
 
 def index(request):
@@ -41,3 +45,15 @@ class SystemUserViewSet(viewsets.ModelViewSet):
                 serializer.instance.set_password(request.data.get("password"))
                 serializer.instance.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SystemGroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all().order_by("-id")
+    serializer_class = SystemGroupSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class SystemPermissionViewSet(viewsets.ModelViewSet):
+    queryset = Permission.objects.all().order_by("-id")
+    serializer_class = SystemPermissionSerializer
+    permission_classes = [permissions.IsAdminUser]
