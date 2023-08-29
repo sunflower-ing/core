@@ -10,7 +10,14 @@ postgresql:
     enablePostgresUser: true
     username: "sunflower-user"
     database: "sunflower-db"
-
+  primary:
+    resources:
+      limits:
+        memory: 1Gi
+        cpu: 500m
+      requests:
+        memory: 1Gi
+        cpu: 250m
 configs:
   DB_ENGINE: django.db.backends.postgresql
   DB_NAME: "sunflower-db"
