@@ -279,18 +279,17 @@ def make_cert(
                 data.get("AuthorityInformationAccess")
             ]
 
+        ocsp_urls = []
+        for item in data.get("AuthorityInformationAccess"):
+            ocsp_urls.append(
+                x509.AccessDescription(
+                    x509.oid.AuthorityInformationAccessOID.OCSP,
+                    x509.UniformResourceIdentifier(item),
+                )
+            )
+
         cert = cert.add_extension(
-            x509.AuthorityInformationAccess(
-                [
-                    x509.AccessDescription(
-                        x509.oid.AuthorityInformationAccessOID.OCSP,
-                        x509.UniformResourceIdentifier(
-                            data.get("AuthorityInformationAccess")
-                        ),
-                    )
-                ]
-            ),
-            critical=False,
+            x509.AuthorityInformationAccess(ocsp_urls), critical=False
         )
 
     cert = cert.sign(private_key=ca_key, algorithm=hashes.SHA256())

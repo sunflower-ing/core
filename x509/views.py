@@ -17,11 +17,11 @@ class KeyViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         instance = None
+        if not request.data.get("name"):
+            request.data.update({"name": str(uuid.uuid4())})
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        if not serializer.initial_data.get("name"):
-            serializer.initial_data["name"] = str(uuid.uuid4())
         if serializer.is_valid(raise_exception=True):
             self.perform_create(serializer)
             instance = serializer.instance
@@ -96,12 +96,12 @@ class CSRViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         instance = None
+        if not request.data.get("key"):
+            key = Key.objects.create(name=str(uuid.uuid4()))
+            request.data.update({"key": key.pk})
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        if not serializer.initial_data.get("key"):
-            key = Key.objects.create(name=str(uuid.uuid4()))
-            serializer.initial_data["key"] = key.pk
         if serializer.is_valid(raise_exception=True):
             self.perform_create(serializer)
             instance = serializer.instance
