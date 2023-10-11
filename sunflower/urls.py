@@ -11,6 +11,7 @@ from core.views import (
     SystemLogEntryViewSet,
     SystemPermissionViewSet,
     SystemUserViewSet,
+    UserView,
     index,
 )
 from ocsp.views import RequestLogViewSet, SourceViewSet, ocsp_view
@@ -44,6 +45,7 @@ urlpatterns = [
     path(
         "v1/api/token/verify/", TokenVerifyView.as_view(), name="token_verify"
     ),
+    path("v1/api/me/", UserView.as_view(), name="user_profile"),
     path("v1/api/", include(router.urls)),
     path("v1/crl/<str:ca_slug>.<str:format>", crl_view, name="crl"),
     path("v1/ocsp/", ocsp_view, name="ocsp"),
