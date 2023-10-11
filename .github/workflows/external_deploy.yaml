@@ -26,3 +26,4 @@ jobs:
           WERF_SECRET_KEY: ${{ secrets.WERF_SECRET_KEY }}
           WERF_SET_ENV_URL: "envUrl=${{ secrets.WERF_EXTERNAL_URL }}"
           WERF_NAMESPACE: "cis-sunflower-external"
+          WERF_VALUES_1: ".helm/values_external.yaml"
