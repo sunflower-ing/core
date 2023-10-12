@@ -1,8 +1,6 @@
 # Default values for sunflower.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-migrate:
-  enabled: true
 
 postgresql:
   enabled: true
@@ -10,6 +8,7 @@ postgresql:
     enablePostgresUser: true
     username: "sunflower-user"
     database: "sunflower-db"
+
   primary:
     resources:
       limits:
@@ -18,88 +17,170 @@ postgresql:
       requests:
         memory: 1Gi
         cpu: 250m
-configs:
-  DB_ENGINE: django.db.backends.postgresql
-  DB_NAME: "sunflower-db"
-  # DB_HOST: localhost
-  DB_PORT: 5432
-  DEBUG: 'True'
-  # CSRF_TRUSTED_ORIGINS: "sunflower.com" ## Need only for debug
-  # ALLOWED_HOSTS: "sunflower.com"
 
-replicaCount: 1
+application:
+  migrate:
+    enabled: true
 
-image:
-  repository: ghcr.io/amazeit/sunflower/sunflower
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag:
+  configs:
+    DB_ENGINE: django.db.backends.postgresql
+    DB_NAME: "sunflower-db"
+    # DB_HOST: localhost
+    DB_PORT: 5432
+    DEBUG: 'True'
+    # CSRF_TRUSTED_ORIGINS: "sunflower.com" ## Need only for debug
+    # ALLOWED_HOSTS: "sunflower.com"
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+  replicaCount: 1
 
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
+  image:
+    repository: ghcr.io/amazeit/sunflower/sunflower
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag:
 
-podAnnotations: {}
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
 
-podSecurityContext: {}
-  # fsGroup: 2000
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+  podAnnotations: {}
 
-service:
-  type: ClusterIP
-  port: 80
+  podSecurityContext: {}
+    # fsGroup: 2000
 
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 80
 
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: chart-example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
 
-nodeSelector: {}
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
 
-tolerations: []
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
 
-affinity: {}
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+
+docs:
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  configs: {}
+    # ENV_NAME: eaxmple
+
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/amazeit/sunflower/sunflower
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag:
+
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations:
+      external-dns.kubernetes.io/class: cloudflare
+      # nginx.ingress.kubernetes.io/rewrite-target: /$2
+      # nginx.ingress.kubernetes.io/use-regex: "true"
+    hosts:
+      - host: chart-example.local
+        paths:
+          - path: /docs/
+            pathType: ImplementationSpecific
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local

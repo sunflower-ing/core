@@ -1,0 +1,28 @@
+{{- if .Values.application.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "sunflower.fullname" . }}-application
+  labels:
+    {{- include "sunflower.labels.application" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "sunflower.fullname" . }}-application
+  minReplicas: {{ .Values.application.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.application.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.application.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.application.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.application.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.application.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

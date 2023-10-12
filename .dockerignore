@@ -5,4 +5,3 @@
 werf.yaml
 Makefile
 .gitignore
-*.md

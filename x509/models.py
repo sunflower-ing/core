@@ -1,17 +1,26 @@
-from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+import datetime
+
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 from utils.crypto import (
-    key_from_pem,
-    key_to_pem,
-    make_keys,
-    make_csr,
-    csr_to_pem,
-    csr_from_pem,
-    make_cert,
+    REVOCATION_REASONS,
     cert_from_pem,
     cert_to_pem,
+    crl_from_pem,
+    crl_to_der,
+    crl_to_pem,
+    csr_from_pem,
+    csr_to_pem,
+    key_from_pem,
+    key_to_pem,
+    make_cert,
+    make_crl,
+    make_csr,
+    make_keys,
 )
 
 ALGO_RSA = "RSA"
@@ -30,6 +39,14 @@ LENGTH_CHOICES = (
     (LENGTH_4096, f"{LENGTH_4096}"),
     (LENGTH_8192, f"{LENGTH_8192}"),
 )
+
+REVOCATION_CHOICES = tuple(
+    (value, key) for (key, value) in REVOCATION_REASONS.items()
+)
+
+
+def get_hosts():
+    return list(filter(lambda h: h != "*", settings.ALLOWED_HOSTS))
 
 
 class Key(models.Model):
@@ -54,13 +71,17 @@ class Key(models.Model):
 
     used = models.BooleanField(verbose_name="Used", default=False)
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self) -> str:
         return f"{self.name} {self.algo}({self.length})"
 
     def save(self, *args, **kwargs) -> None:
-        private_key, public_key = make_keys(self.algo, self.length)
-        self.private = key_to_pem(private_key, private=True).decode()
-        self.public = key_to_pem(public_key).decode()
+        if self._state.adding is True:
+            private_key, public_key = make_keys(self.algo, self.length)
+            self.private = key_to_pem(private_key, private=True).decode()
+            self.public = key_to_pem(public_key).decode()
         return super().save(*args, **kwargs)
 
     def private_as_object(self) -> rsa.RSAPrivateKey | dsa.DSAPrivateKey:
@@ -74,6 +95,10 @@ class CSR(models.Model):
     key = models.ForeignKey(to=Key, on_delete=models.RESTRICT)
 
     name = models.CharField(verbose_name="Internal name", max_length=255)
+    slug = models.SlugField(
+        verbose_name="Slug", max_length=255, unique=True, blank=True
+    )
+
     body = models.TextField(verbose_name="CSR", blank=True)
     params = models.JSONField(verbose_name="Certificate params", blank=True)
     ca = models.BooleanField(verbose_name="CA", default=False)
@@ -86,11 +111,32 @@ class CSR(models.Model):
 
     signed = models.BooleanField(verbose_name="Signed", default=False)
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self) -> str:
         return self.name
 
     def save(self, *args, **kwargs) -> None:
-        csr_object = make_csr(self.key.private_as_object(), self.params)
+        self.slug = slugify(self.name, allow_unicode=True)
+
+        if self.ca:
+            if not self.params.get("CRLDistributionPoints"):
+                self.params["CRLDistributionPoints"] = []
+                for host in get_hosts():
+                    self.params["CRLDistributionPoints"].append(
+                        f"{host}/{self.slug}"
+                    )
+
+            if not self.params.get("AuthorityInformationAccess"):
+                self.params["AuthorityInformationAccess"] = []
+                for host in get_hosts():
+                    self.params["AuthorityInformationAccess"].append(host)
+
+        data: dict = self.params
+        data.update({"ca": self.ca, "path_length": self.path_length})
+
+        csr_object = make_csr(self.key.private_as_object(), data)
         self.body = csr_to_pem(csr_object).decode()
         self.key.used = True
         self.key.save()
@@ -99,36 +145,138 @@ class CSR(models.Model):
     def as_object(self) -> x509.CertificateSigningRequest:
         return csr_from_pem(self.body.encode())
 
+    @property
+    def subject(self):
+        return self.as_object().subject.rfc4514_string()
+
 
 class Certificate(models.Model):
     csr = models.ForeignKey(to=CSR, on_delete=models.RESTRICT)
-    parent = models.ForeignKey(to="self", on_delete=models.RESTRICT)
+    parent = models.ForeignKey(
+        to="self", on_delete=models.RESTRICT, null=True, blank=True
+    )
 
-    body = models.TextField(verbose_name="Certificate")
+    sn = models.BigIntegerField(
+        verbose_name="Serial number", null=True, blank=True
+    )
+    body = models.TextField(verbose_name="Certificate", blank=True)
     created_at = models.DateTimeField(
         verbose_name="Created at", auto_now_add=True
     )
 
     revoked = models.BooleanField(verbose_name="Revoked", default=False)
+    revocation_reason = models.CharField(
+        verbose_name="Revocation reason",
+        max_length=20,
+        choices=REVOCATION_CHOICES,
+        null=True,
+        blank=True,
+    )
+    revoked_at = models.DateTimeField(
+        verbose_name="Revoked at", null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self) -> str:
         return self.csr.name
 
     def save(self, *args, **kwargs) -> None:
-        cert_object = make_cert(
-            self.parent.as_object(),
-            self.parent.csr.key.private_as_object(),
-            self.csr.as_object(),
-            self.csr.params,
-        )
-        self.body = cert_to_pem(cert_object).decode()
-        self.csr.signed = True
-        self.csr.save()
+        if self._state.adding is True:
+            if not self.parent:
+                cert_object = make_cert(
+                    ca_cert=self.csr.as_object(),
+                    ca_key=self.csr.key.private_as_object(),
+                    csr=self.csr.as_object(),
+                    data=self.csr.params,
+                    self_sign=True,
+                    issuer_dn=self.csr.params.get("issuerDN"),
+                )
+            else:
+                cert_object = make_cert(
+                    ca_cert=self.parent.as_object(),
+                    ca_key=self.parent.csr.key.private_as_object(),
+                    csr=self.csr.as_object(),
+                    data=self.csr.params,
+                    self_sign=False,
+                    issuer_dn=self.csr.params.get("issuerDN"),
+                )
+            self.body = cert_to_pem(cert_object).decode()
+            self.sn = cert_object.serial_number
+            self.csr.signed = True
+            self.csr.save()
+
         return super().save(*args, **kwargs)
+
+    def revoke(self, reason: str = None) -> None:
+        self.revoked = True
+        self.revoked_at = datetime.datetime.now()
+        self.revocation_reason = (
+            reason if reason else REVOCATION_REASONS["unspecified"]
+        )
+        self.save()
+
+        crl = CRL.objects.filter(ca=self.parent).first()
+        crl.save()
 
     def as_object(self) -> x509.Certificate:
         return cert_from_pem(self.body.encode())
 
+    @property
+    def name(self):
+        return self.csr.name
 
-# class CRL(models.Model):
-#     pass
+    @property
+    def subject(self):
+        return self.csr.subject
+
+
+class CRL(models.Model):
+    ca = models.ForeignKey(to=Certificate, on_delete=models.RESTRICT)
+    body = models.TextField(verbose_name="CRL")
+
+    last_update = models.DateTimeField(
+        verbose_name="Last update", auto_now=True
+    )
+    next_update = models.DateTimeField(verbose_name="Next update")
+
+    def __str__(self) -> str:
+        return str(self.ca)
+
+    def save(self, *args, **kwargs) -> None:
+        if self._state.adding is True:
+            crl_object = make_crl(
+                self.ca.as_object(), self.ca.csr.key.private_as_object()
+            )
+
+        else:
+            revoked_certs = []
+            for item in Certificate.objects.filter(
+                parent=self.ca, revoked=True
+            ):
+                revoked_certs.append(
+                    (item.as_object(), item.revocation_reason, item.revoked_at)
+                )
+
+            crl_object = make_crl(
+                self.ca.as_object(),
+                self.ca.csr.key.private_as_object(),
+                revoked_certs,
+            )
+
+        self.body = crl_to_pem(crl_object).decode()
+        self.next_update = datetime.datetime.now() + datetime.timedelta(
+            1, 0, 0  # TODO: move next_update delta to config
+        )
+
+        return super().save(*args, **kwargs)
+
+    def as_object(self) -> x509.CertificateRevocationList:
+        return crl_from_pem(self.body.encode())
+
+    def as_pem(self) -> str:
+        return self.body
+
+    def as_der(self) -> bytes:
+        return crl_to_der(self.as_object())

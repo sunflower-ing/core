@@ -4,11 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-cryptography = "==36.0.2"
+cryptography = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 django = "*"
 python-dotenv = "*"
 psycopg2-binary = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
+djangorestframework-simplejwt = {extras = ["crypto"], version = "*"}
+celery = "*"
+redis = "*"
 
 [dev-packages]
 pytest = "*"

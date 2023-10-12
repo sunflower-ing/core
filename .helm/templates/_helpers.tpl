@@ -33,9 +33,9 @@ Create chart name and version as used by the chart label.
 {{/*
 Common labels
 */}}
-{{- define "sunflower.labels" -}}
+{{- define "sunflower.labels.application" -}}
 helm.sh/chart: {{ include "sunflower.chart" . }}
-{{ include "sunflower.selectorLabels" . }}
+{{ include "sunflower.selectorLabels.application" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,18 +45,50 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "sunflower.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "sunflower.name" . }}
+{{- define "sunflower.selectorLabels.application" -}}
+app.kubernetes.io/name: {{ include "sunflower.name" . }}-application
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "sunflower.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "sunflower.fullname" .) .Values.serviceAccount.name }}
+{{- define "sunflower.serviceAccountName.application" -}}
+{{- if .Values.application.serviceAccount.create }}
+{{- default (include "sunflower.fullname" .) .Values.application.serviceAccount.name }}-application
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- default "default" .Values.application.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+
+{{/*
+Common labels
+*/}}
+{{- define "sunflower.labels.docs" -}}
+helm.sh/chart: {{ include "sunflower.chart" . }}
+{{ include "sunflower.selectorLabels.docs" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "sunflower.selectorLabels.docs" -}}
+app.kubernetes.io/name: {{ include "sunflower.name" . }}-docs
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "sunflower.serviceAccountName.docs" -}}
+{{- if .Values.docs.serviceAccount.create }}
+{{- default (include "sunflower.fullname" .) .Values.docs.serviceAccount.name }}-docs
+{{- else }}
+{{- default "default" .Values.docs.serviceAccount.name }}
 {{- end }}
 {{- end }}

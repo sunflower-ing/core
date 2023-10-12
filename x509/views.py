@@ -1,117 +1,256 @@
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
 import uuid
-from .models import ALGO_CHOICES, CSR, LENGTH_CHOICES, Key
+
+from django.http import HttpResponse
+from rest_framework import permissions, status, viewsets
+from rest_framework.response import Response
+
+from core.models import Actions, Modules, log
+
+from .models import CRL, CSR, Certificate, Key
+from .serializers import CertificateSerialiser, CSRSerializer, KeySerializer
 
 
-def certificates_list(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+class KeyViewSet(viewsets.ModelViewSet):
+    queryset = Key.objects.all()
+    serializer_class = KeySerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        instance = None
+        if not request.data.get("name"):
+            request.data.update({"name": str(uuid.uuid4())})
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            instance = serializer.instance
 
-def certificate_detail(request, certificate_id):
-    return HttpResponse("Hello, world. You're at the polls index.")
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.CREATE,
+            entity="KEY",
+            object_id=instance.pk,
+        )
+        return super().create(request, *args, **kwargs)
 
-
-def certificate_new(request):
-    pass
-
-
-def keys_list(request):
-    keys = Key.objects.order_by("-created_at")
-    ctx = {"keys_list": keys}
-    return render(request, "x509/keys_list.html", ctx)
-
-
-def key_detail(request, key_id):
-    key = Key.objects.get(id=key_id)
-    ctx = {"key": key, "csr": key.csr_set.all().first()}
-    return render(request, "x509/key_detail.html", ctx)
-
-
-def key_new(request):
-    ctx = {
-        "name": request.POST.get("name", ""),
-        "algo": request.POST.get("algo"),
-        "length": request.POST.get("length"),
-        "algo_options": ALGO_CHOICES,
-        "length_options": LENGTH_CHOICES,
-    }
-
-    if request.POST:
-        try:
-            key = Key(
-                name=ctx["name"], algo=ctx["algo"], length=int(ctx["length"])
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.used:
+            return Response(
+                data={"detail": "Method not allowed for Key in use"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
             )
-            key.save()
-            return redirect("x509:key_detail", key_id=key.id)
 
-        except Exception as e:
-            ctx.update({"error": str(e)})
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.UPDATE,
+            entity="KEY",
+            object_id=instance.pk,
+        )
+        return super().update(request, *args, **kwargs)
 
-    return render(request, "x509/key_new.html", ctx)
-
-
-def csr_list(request):
-    csrs = CSR.objects.order_by("-created_at")
-    ctx = {"csrs_list": csrs}
-    return render(request, "x509/csrs_list.html", ctx)
-
-
-def csr_detail(request, csr_id):
-    ctx = {"csr": CSR.objects.get(id=csr_id)}
-    return render(request, "x509/csr_detail.html", ctx)
-
-
-def csr_new(request):
-    ctx = {
-        "available_keys": Key.objects.filter(used=False).order_by(
-            "-created_at"
-        ),
-        "key": int(request.POST.get("key", 0)),
-        "name": request.POST.get("name", ""),
-        "ca": bool(request.POST.get("ca", False)),
-        "path_length": int(request.POST.get("path_length", 0)),
-        "params": {
-            # Type
-            "extendedKeyUsage": request.POST.get(
-                "extendedKeyUsage", "client_auth"
-            ),
-            # DN
-            "countryName": request.POST.get("countryName", ""),
-            "stateOrProvinceName": request.POST.get("stateOrProvinceName", ""),
-            "localityName": request.POST.get("localityName", ""),
-            "organizationName": request.POST.get("organizationName", ""),
-            "organizationUnitName": request.POST.get(
-                "organizationUnitName", ""
-            ),
-            "commonName": request.POST.get("commonName", ""),
-            "emailAddress": request.POST.get("emailAddress", ""),
-            "givenName": request.POST.get("givenName", ""),
-            "surname": request.POST.get("surname", ""),
-            # Others
-            "takeFromIssuer": bool(request.POST.get("takeFromIssuer", False)),
-        },
-    }
-
-    if request.POST:
-        try:
-            if ctx["key"] > 0:
-                key = Key.objects.get(id=ctx["key"])
-            else:
-                key = Key(name=str(uuid.uuid4()))
-                key.save()
-
-            csr = CSR(
-                key=key,
-                name=ctx["name"],
-                ca=ctx["ca"],
-                path_length=ctx["path_length"],
-                params=ctx["params"],
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.used:
+            return Response(
+                data={"detail": "Method not allowed for Key in use"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
             )
-            csr.save()
-            return redirect("x509:key_detail", key_id=key.id)
 
-        except Exception as e:
-            ctx.update({"error": str(e)})
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.DESTROY,
+            entity="KEY",
+            object_id=instance.pk,
+        )
+        return super().destroy(request, *args, **kwargs)
 
-    return render(request, "x509/csr_new.html", ctx)
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.RETRIEVE,
+            entity="KEY",
+            object_id=self.get_object().pk,
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.LIST,
+            entity="KEY",
+        )
+        return super().list(request, *args, **kwargs)
+
+
+class CSRViewSet(viewsets.ModelViewSet):
+    queryset = CSR.objects.all()
+    serializer_class = CSRSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        instance = None
+        if not request.data.get("key"):
+            key = Key.objects.create(name=str(uuid.uuid4()))
+            request.data.update({"key": key.pk})
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            instance = serializer.instance
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.CREATE,
+            entity="CSR",
+            object_id=instance.pk,
+        )
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.signed:
+            return Response(
+                data={"detail": "Method not allowed for signed CSR"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.UPDATE,
+            entity="CSR",
+            object_id=instance.pk,
+        )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.signed:
+            return Response(
+                data={"detail": "Method not allowed for signed CSR"},
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
+        else:
+            instance.key.used = False
+            instance.key.save()  # Free the Key for later use
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.DESTROY,
+            entity="CSR",
+            object_id=instance.pk,
+        )
+        return super().destroy(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.RETRIEVE,
+            entity="CSR",
+            object_id=self.get_object().pk,
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.LIST,
+            entity="CSR",
+        )
+        return super().list(request, *args, **kwargs)
+
+
+class CertificateViewSet(viewsets.ModelViewSet):
+    queryset = Certificate.objects.all()
+    serializer_class = CertificateSerialiser
+    permission_classes = [permissions.IsAuthenticated]
+
+    http_method_names = ["get", "post", "put"]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={'request': request}
+        )
+        if serializer.is_valid():
+            instance = serializer.save()
+            if instance.csr.ca:
+                crl = CRL(ca=instance)
+                crl.save()
+
+            log(
+                user=request.user,
+                module=Modules.X509,
+                action=Actions.CREATE,
+                entity="CERTIFICATE",
+                object_id=instance.pk,
+            )
+            return Response(
+                data=serializer.data, status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.revoked:
+            return Response(
+                data={"detail": "Certificate already revoked"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # TODO: check only revoked & revocation_reason fields are changed
+        if not request.data.get("revoked"):
+            return Response(
+                data={"detail": "Method can only be used for revocation"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        instance.revoke(request.data.get("reason"))
+
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.UPDATE,
+            entity="CERTIFICATE",
+            object_id=instance.pk,
+        )
+        return Response(data=request.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.RETRIEVE,
+            entity="CERTIFICATE",
+            object_id=self.get_object().pk,
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.X509,
+            action=Actions.LIST,
+            entity="CERTIFICATE",
+        )
+        return super().list(request, *args, **kwargs)
+
+
+def crl_view(request, ca_slug, format: str = "crl"):
+    crl = CRL.objects.filter(ca__csr__slug=ca_slug).first()
+    if format == "crt":
+        return HttpResponse(crl.as_der())
+    else:
+        return HttpResponse(crl.as_pem())

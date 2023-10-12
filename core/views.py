@@ -1,36 +1,201 @@
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.contrib.auth.models import Group, Permission, User
+from django.http import JsonResponse
+from rest_framework import permissions, status, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from x509.models import CSR, Certificate, Key
+from .models import Actions, LogEntry, Modules, log
+from .serializers import (
+    SystemGroupSerializer,
+    SystemLogEntrySerializer,
+    SystemPermissionSerializer,
+    SystemUserSerializer,
+)
 
 
-@login_required
 def index(request):
-    response = {
-        "key_count": Key.objects.count(),
-        "csr_count": CSR.objects.count(),
-        "certificate_count": Certificate.objects.count(),
-    }
-    return render(request, "core/dashboard.html", response)
+    return JsonResponse({"i'm": "ok"})
 
 
-def login_view(request):
-    response = {}
+class UserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-    if request.POST:
-        username = request.POST["username"]
-        password = request.POST["password"]
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect("index")
-        else:
-            response = {"error": "Authentication failed"}
-
-    return render(request, "login.html", response)
+    def get(self, request):
+        return Response(SystemUserSerializer(instance=request.user).data)
 
 
-def logout_view(request):
-    logout(request)
-    return redirect("/")
+class SystemUserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().order_by("-id")
+    serializer_class = SystemUserSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        instance = None
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            if request.data.get("password"):
+                serializer.instance.set_password(request.data.get("password"))
+                serializer.instance.save()
+                instance = serializer.instance
+
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.CREATE,
+            entity="USER",
+            object_id=instance.pk,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        partial = kwargs.pop("partial", False)
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            context={"request": request},
+            partial=partial,
+        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_update(serializer)
+            if request.data.get("password"):
+                instance.set_password(request.data.get("password"))
+                instance.save()
+
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.UPDATE,
+            entity="USER",
+            object_id=instance.pk,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.DESTROY,
+            entity="USER",
+            object_id=self.get_object().pk,
+        )
+        return super().destroy(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.RETRIEVE,
+            entity="USER",
+            object_id=self.get_object().pk,
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.LIST,
+            entity="USER",
+        )
+        return super().list(request, *args, **kwargs)
+
+
+class SystemGroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all().order_by("-id")
+    serializer_class = SystemGroupSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        instance = None
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid(raise_exception=True):
+            self.perform_create(serializer)
+            instance = serializer.instance
+
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.CREATE,
+            entity="GROUP",
+            object_id=instance.pk,
+        )
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.UPDATE,
+            entity="GROUP",
+            object_id=self.get_object().pk,
+        )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.DESTROY,
+            entity="GROUP",
+            object_id=self.get_object().pk,
+        )
+        return super().destroy(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.RETRIEVE,
+            entity="GROUP",
+            object_id=self.get_object().pk,
+        )
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.LIST,
+            entity="GROUP",
+        )
+        return super().list(request, *args, **kwargs)
+
+
+class SystemPermissionViewSet(viewsets.ModelViewSet):
+    queryset = Permission.objects.all().order_by("-id")
+    serializer_class = SystemPermissionSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    http_method_names = ["get"]
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.LIST,
+            entity="PERMISSION",
+        )
+        return super().list(request, *args, **kwargs)
+
+
+class SystemLogEntryViewSet(viewsets.ModelViewSet):
+    queryset = LogEntry.objects.all()
+    serializer_class = SystemLogEntrySerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    http_method_names = ["get"]
+
+    def list(self, request, *args, **kwargs):
+        log(
+            user=request.user,
+            module=Modules.SYSTEM,
+            action=Actions.LIST,
+            entity="LOG_ENTRY",
+        )
+        return super().list(request, *args, **kwargs)
