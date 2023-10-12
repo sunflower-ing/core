@@ -1,0 +1,6 @@
+nodeSelector:
+  node-role.kubernetes.io/dmz: ""
+tolerations:
+  - key: "node-role.kubernetes.io/dmz"
+    operator: "Exists"
+    effect: "NoSchedule"

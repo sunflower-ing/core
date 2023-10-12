@@ -9,6 +9,15 @@ postgresql:
     username: "sunflower-user"
     database: "sunflower-db"
 
+  primary:
+    resources:
+      limits:
+        memory: 1Gi
+        cpu: 500m
+      requests:
+        memory: 1Gi
+        cpu: 250m
+
 application:
   migrate:
     enabled: true
