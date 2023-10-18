@@ -47,6 +47,6 @@ urlpatterns = [
     ),
     path("v1/api/me/", UserView.as_view(), name="user_profile"),
     path("v1/api/", include(router.urls)),
-    path("v1/crl/<str:ca_slug>.<str:format>", crl_view, name="crl"),
-    path("v1/ocsp/", ocsp_view, name="ocsp"),
+    path("crl/<str:ca_slug>.<str:format>", crl_view, name="crl"),
+    path("ocsp/", ocsp_view, name="ocsp"),
 ]
