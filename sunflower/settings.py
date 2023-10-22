@@ -31,6 +31,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'insecure-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 TEMPLATE_DEBUG = DEBUG
 
+FORCE_SCRIPT_NAME = os.environ.get('FORCE_SCRIPT_NAME', '/')
+
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', ["*"])
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',

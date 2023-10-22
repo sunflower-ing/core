@@ -23,6 +23,7 @@ application:
     enabled: true
 
   configs:
+    FORCE_SCRIPT_NAME: /backend
     DB_ENGINE: django.db.backends.postgresql
     DB_NAME: "sunflower-db"
     # DB_HOST: localhost
@@ -76,7 +77,7 @@ application:
     hosts:
       - host: chart-example.local
         paths:
-          - path: /
+          - path: /backend
             pathType: ImplementationSpecific
     tls: []
     #  - secretName: chart-example-tls
