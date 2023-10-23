@@ -12,4 +12,4 @@ class SourceSerializer(serializers.ModelSerializer):
 class RequestLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = RequestLog
-        fields = ("id", "date", "cert", "host", "addr")
+        fields = ("id", "date", "cert", "host", "addr", "result")
