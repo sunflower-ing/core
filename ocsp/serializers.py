@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Source, RequestLog
+from .models import RequestLog, Source
 
 
 class SourceSerializer(serializers.ModelSerializer):
@@ -12,4 +12,12 @@ class SourceSerializer(serializers.ModelSerializer):
 class RequestLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = RequestLog
-        fields = ("id", "date", "cert", "host", "addr", "result")
+        fields = (
+            "id",
+            "date",
+            "cert",
+            "host",
+            "addr",
+            "result",
+            "result_display",
+        )
