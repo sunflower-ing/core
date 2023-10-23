@@ -17,11 +17,10 @@ from .serializers import RequestLogSerializer, SourceSerializer
 
 @csrf_exempt
 def ocsp_view(request):
-    print(f"REMOTE_ADDR: {request.META.get('REMOTE_ADDR')}")
-    print(f"REMOTE_HOST: {request.META.get('REMOTE_HOST')}")
     if request.method == "POST":
         req_data = read_ocsp_request(request.body)
         try:
+            # TODO: Use fingerprint to search certificate
             cert = Certificate.objects.get(sn=req_data.get("serial_number"))
             if not cert.revoked:
                 response = create_ocsp_response(
@@ -49,18 +48,27 @@ def ocsp_view(request):
             )
             log.save()
 
-            return HttpResponse(ocsp_response_to_der(response))
+            return HttpResponse(
+                ocsp_response_to_der(response),
+                content_type="application/ocsp-response",
+            )
 
         except Certificate.DoesNotExist:
             response = ocsp.OCSPResponseBuilder.build_unsuccessful(
                 ocsp.OCSPResponseStatus.INTERNAL_ERROR
             )
-            return HttpResponse(ocsp_response_to_der(response))
+            return HttpResponse(
+                ocsp_response_to_der(response),
+                content_type="application/ocsp-response",
+            )
 
     response = ocsp.OCSPResponseBuilder.build_unsuccessful(
         ocsp.OCSPResponseStatus.MALFORMED_REQUEST
     )
-    return HttpResponse(ocsp_response_to_der(response))
+    return HttpResponse(
+        ocsp_response_to_der(response),
+        content_type="application/ocsp-response",
+    )
 
 
 class SourceViewSet(viewsets.ModelViewSet):

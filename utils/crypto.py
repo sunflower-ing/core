@@ -146,7 +146,7 @@ def make_cert(
             datetime.datetime.utcnow()
             + datetime.timedelta(days=data.get("days"))
         )
-        .add_extension(
+        .add_extension(  # FIXME: there MUST be current cert's key
             x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()),
             critical=False,
         )
