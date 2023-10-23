@@ -11,7 +11,14 @@ from utils.crypto import (
 )
 from x509.models import Certificate
 
-from .models import RequestLog, Source
+from .models import (
+    RequestLog,
+    Source,
+    OCSP_RESULT_OK,
+    OCSP_RESULT_ERROR,
+    OCSP_RESULT_REVOKED,
+    OCSP_RESULT_UNKNOWN,
+)
 from .serializers import RequestLogSerializer, SourceSerializer
 
 
@@ -30,6 +37,12 @@ def ocsp_view(request):
                     responder_cert=cert.parent.as_object(),
                     responder_key=cert.parent.csr.key.private_as_object(),
                 )
+                log = RequestLog(
+                    cert=cert,
+                    host=request.META.get('REMOTE_HOST'),
+                    addr=request.META.get('REMOTE_ADDR'),
+                    result=OCSP_RESULT_OK,
+                )
             else:
                 response = create_ocsp_response(
                     cert=cert.as_object(),
@@ -40,12 +53,13 @@ def ocsp_view(request):
                     revocation_time=cert.revoked_at,
                     revocation_reason=cert.revocation_reason,
                 )
+                log = RequestLog(
+                    cert=cert,
+                    host=request.META.get('REMOTE_HOST'),
+                    addr=request.META.get('REMOTE_ADDR'),
+                    result=OCSP_RESULT_REVOKED,
+                )
 
-            log = RequestLog(
-                cert=cert,
-                host=request.META.get('REMOTE_HOST'),
-                addr=request.META.get('REMOTE_ADDR'),
-            )
             log.save()
 
             return HttpResponse(
@@ -54,13 +68,30 @@ def ocsp_view(request):
             )
 
         except Certificate.DoesNotExist:
+            log = RequestLog(
+                cert=None,
+                host=request.META.get('REMOTE_HOST'),
+                addr=request.META.get('REMOTE_ADDR'),
+                result=OCSP_RESULT_UNKNOWN,
+            )
+            log.save()
+
             response = ocsp.OCSPResponseBuilder.build_unsuccessful(
                 ocsp.OCSPResponseStatus.INTERNAL_ERROR
             )
+
             return HttpResponse(
                 ocsp_response_to_der(response),
                 content_type="application/ocsp-response",
             )
+
+    log = RequestLog(
+        cert=cert,
+        host=request.META.get('REMOTE_HOST'),
+        addr=request.META.get('REMOTE_ADDR'),
+        result=OCSP_RESULT_ERROR,
+    )
+    log.save()
 
     response = ocsp.OCSPResponseBuilder.build_unsuccessful(
         ocsp.OCSPResponseStatus.MALFORMED_REQUEST
