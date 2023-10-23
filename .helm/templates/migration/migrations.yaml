@@ -33,7 +33,7 @@ spec:
       - name: {{ .Chart.Name }}-migrate
         envFrom:
         - configMapRef:
-            name: {{ include "sunflower.fullname" . }}
+            name: {{ include "sunflower.fullname" . }}-application
         securityContext:
           {{- toYaml .Values.application.securityContext | nindent 12 }}
         {{- if .Values.werf }}
