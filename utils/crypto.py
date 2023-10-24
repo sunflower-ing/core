@@ -397,8 +397,16 @@ def ocsp_response_to_der(response: ocsp.OCSPResponse) -> bytes:
     return response.public_bytes(serialization.Encoding.DER)
 
 
+# TODO: make hash type parameter
 def get_cert_fingerprint(cert: x509.Certificate) -> bytes:
-    return binascii.hexlify(cert.fingerprint(hashes.SHA256()))
+    return binascii.hexlify(cert.fingerprint(hashes.SHA1()))  # nosec
+
+
+# TODO: make hash type parameter
+def get_cert_name_fingerprint(cert: x509.Certificate) -> bytes:
+    digest = hashes.Hash(hashes.SHA1())  # nosec
+    digest.update(cert.subject.public_bytes())
+    return binascii.hexlify(digest.finalize())
 
 
 def get_key_fingerprint(key: rsa.RSAPublicKey | dsa.DSAPublicKey) -> bytes:
