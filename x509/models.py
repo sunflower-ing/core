@@ -15,6 +15,9 @@ from utils.crypto import (
     crl_to_pem,
     csr_from_pem,
     csr_to_pem,
+    get_cert_fingerprint,
+    get_cert_name_fingerprint,
+    get_key_fingerprint,
     key_from_pem,
     key_to_pem,
     make_cert,
@@ -51,8 +54,17 @@ def get_hosts():
 
 class Key(models.Model):
     name = models.CharField(verbose_name="Internal name", max_length=255)
-    private = models.TextField(verbose_name="Private part", blank=True)
+    private = models.TextField(
+        verbose_name="Private part", blank=True, null=True
+    )
     public = models.TextField(verbose_name="Public part", blank=True)
+    fingerprint = models.CharField(
+        verbose_name="Fingerprint",
+        max_length=40,
+        unique=True,
+        db_index=True,
+        null=True,
+    )
     algo = models.CharField(
         verbose_name="Algorithm",
         max_length=7,
@@ -79,9 +91,17 @@ class Key(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding is True:
-            private_key, public_key = make_keys(self.algo, self.length)
-            self.private = key_to_pem(private_key, private=True).decode()
-            self.public = key_to_pem(public_key).decode()
+            if not self.public:
+                if self.private:  # On import
+                    private_key = self.private_as_object()
+                    public_key = private_key.public_key()
+                else:  # On API create
+                    private_key, public_key = make_keys(self.algo, self.length)
+                self.private = key_to_pem(private_key, private=True).decode()
+                self.public = key_to_pem(public_key).decode()
+            else:  # On certificate import
+                public_key = self.public_as_object()
+            self.fingerprint = get_key_fingerprint(public_key).decode()
         return super().save(*args, **kwargs)
 
     def private_as_object(self) -> rsa.RSAPrivateKey | dsa.DSAPrivateKey:
@@ -120,19 +140,6 @@ class CSR(models.Model):
     def save(self, *args, **kwargs) -> None:
         self.slug = slugify(self.name, allow_unicode=True)
 
-        if self.ca:
-            if not self.params.get("CRLDistributionPoints"):
-                self.params["CRLDistributionPoints"] = []
-                for host in get_hosts():
-                    self.params["CRLDistributionPoints"].append(
-                        f"{host}/{self.slug}"
-                    )
-
-            if not self.params.get("AuthorityInformationAccess"):
-                self.params["AuthorityInformationAccess"] = []
-                for host in get_hosts():
-                    self.params["AuthorityInformationAccess"].append(host)
-
         data: dict = self.params
         data.update({"ca": self.ca, "path_length": self.path_length})
 
@@ -146,20 +153,33 @@ class CSR(models.Model):
         return csr_from_pem(self.body.encode())
 
     @property
-    def subject(self):
+    def subject(self) -> str:
         return self.as_object().subject.rfc4514_string()
 
 
 class Certificate(models.Model):
-    csr = models.ForeignKey(to=CSR, on_delete=models.RESTRICT)
+    csr = models.ForeignKey(to=CSR, on_delete=models.RESTRICT, null=True)
+    key = models.ForeignKey(to=Key, on_delete=models.RESTRICT, null=True)
     parent = models.ForeignKey(
         to="self", on_delete=models.RESTRICT, null=True, blank=True
     )
-
     sn = models.BigIntegerField(
         verbose_name="Serial number", null=True, blank=True
     )
     body = models.TextField(verbose_name="Certificate", blank=True)
+    fingerprint = models.CharField(
+        verbose_name="Fingerprint",
+        max_length=40,
+        unique=True,
+        null=True,
+        blank=True,
+    )
+    name_hash = models.CharField(
+        verbose_name="Name hash", max_length=40, null=True, blank=True
+    )
+    key_hash = models.CharField(
+        verbose_name="Key hash", max_length=40, null=True, blank=True
+    )
     created_at = models.DateTimeField(
         verbose_name="Created at", auto_now_add=True
     )
@@ -180,32 +200,40 @@ class Certificate(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return self.csr.name
+        return self.name
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding is True:
-            if not self.parent:
-                cert_object = make_cert(
-                    ca_cert=self.csr.as_object(),
-                    ca_key=self.csr.key.private_as_object(),
-                    csr=self.csr.as_object(),
-                    data=self.csr.params,
-                    self_sign=True,
-                    issuer_dn=self.csr.params.get("issuerDN"),
-                )
-            else:
-                cert_object = make_cert(
-                    ca_cert=self.parent.as_object(),
-                    ca_key=self.parent.csr.key.private_as_object(),
-                    csr=self.csr.as_object(),
-                    data=self.csr.params,
-                    self_sign=False,
-                    issuer_dn=self.csr.params.get("issuerDN"),
-                )
-            self.body = cert_to_pem(cert_object).decode()
+            if self.csr:
+                if not self.parent:
+                    cert_object = make_cert(
+                        ca_cert=self.csr.as_object(),
+                        ca_key=self.csr.key.private_as_object(),
+                        csr=self.csr.as_object(),
+                        data=self.csr.params,
+                        self_sign=True,
+                        issuer_dn=self.csr.params.get("issuerDN"),
+                    )
+                else:
+                    cert_object = make_cert(
+                        ca_cert=self.parent.as_object(),
+                        ca_key=self.parent.csr.key.private_as_object(),
+                        csr=self.csr.as_object(),
+                        data=self.csr.params,
+                        self_sign=False,
+                        issuer_dn=self.csr.params.get("issuerDN"),
+                    )
+                self.body = cert_to_pem(cert_object).decode()
+                self.key = self.csr.key
+                self.key_hash = self.csr.key.fingerprint
+                self.csr.signed = True
+                self.csr.save()
+            else:  # On import
+                cert_object = cert_from_pem(self.body.encode())
+
             self.sn = cert_object.serial_number
-            self.csr.signed = True
-            self.csr.save()
+            self.fingerprint = get_cert_fingerprint(cert_object).decode()
+            self.name_hash = get_cert_name_fingerprint(cert_object).decode()
 
         return super().save(*args, **kwargs)
 
@@ -217,19 +245,20 @@ class Certificate(models.Model):
         )
         self.save()
 
-        crl = CRL.objects.filter(ca=self.parent).first()
-        crl.save()
+        if self.parent:
+            crl = CRL.objects.filter(ca=self.parent).first()
+            crl.save()
 
     def as_object(self) -> x509.Certificate:
         return cert_from_pem(self.body.encode())
 
     @property
-    def name(self):
-        return self.csr.name
+    def name(self) -> str:
+        return self.csr.name if self.csr else "(imported)"
 
     @property
-    def subject(self):
-        return self.csr.subject
+    def subject(self) -> str:
+        return self.as_object().subject.rfc4514_string()
 
 
 class CRL(models.Model):
