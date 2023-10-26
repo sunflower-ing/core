@@ -17,6 +17,7 @@ class KeySerializer(serializers.ModelSerializer):
             "used",
             "public",
             "private",
+            "fingerprint",
         )
 
 
@@ -102,5 +103,6 @@ class CertificateSerialiser(serializers.ModelSerializer):
             "revoked_at",
             "revocation_reason",
             "body",
+            "fingerprint",
         )
         read_only_fields = ["subject", "sn"]

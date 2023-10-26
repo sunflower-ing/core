@@ -1,10 +1,18 @@
 import uuid
 
-from django.http import HttpResponse
+from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 
 from core.models import Actions, Modules, log
+from utils.crypto import (
+    cert_from_pem,
+    get_key_fingerprint,
+    key_from_pem,
+    key_to_pem,
+)
 
 from .models import CRL, CSR, Certificate, Key
 from .serializers import CertificateSerialiser, CSRSerializer, KeySerializer
@@ -254,3 +262,75 @@ def crl_view(request, ca_slug, format: str = "crl"):
         return HttpResponse(crl.as_der())
     else:
         return HttpResponse(crl.as_pem())
+
+
+@csrf_exempt
+def key_import_view(request):
+    if request.method == "POST":
+        try:
+            key_pem: bytes = request.read()
+            private_key = key_from_pem(key_pem=key_pem, private=True)
+
+            if isinstance(private_key, rsa.RSAPrivateKey):
+                algo = "RSA"
+            elif isinstance(private_key, dsa.DSAPrivateKey):
+                algo = "DSA"
+            else:
+                return JsonResponse({"detail": "Unknown key type"}, status=400)
+
+            # TODO: check if key with the same fingerprint already exists
+            # and add the private part only (possible on certificate import)
+            key = Key(
+                name=str(uuid.uuid4()),
+                private=key_pem.decode(),
+                length=private_key.key_size,
+                algo=algo,
+            )
+            key.save()
+            return JsonResponse({"id": key.pk})
+
+        except Exception as e:
+            return JsonResponse({"detail": str(e)}, status=500)
+
+    return JsonResponse({"detail": "Unsupported method"}, status=405)
+
+
+@csrf_exempt
+def certificate_import_view(request):
+    if request.method == "POST":
+        try:
+            cert_pem: bytes = request.read()
+            certificate = cert_from_pem(cert_pem=cert_pem)
+
+            # First deal with the Key
+            public_key = certificate.public_key()
+            public_key_fingerprint = get_key_fingerprint(public_key).decode()
+            try:
+                key = Key.objects.get(fingerprint=public_key_fingerprint)
+            except Key.DoesNotExist:
+                if isinstance(public_key, rsa.RSAPublicKey):
+                    algo = "RSA"
+                else:
+                    algo = "DSA"
+                key = Key(
+                    name=str(uuid.uuid4()),
+                    public=key_to_pem(public_key).decode(),
+                    length=public_key.key_size,
+                    algo=algo,
+                )
+                key.save()
+            # Now the Certificate itself
+            # TODO: search parent cert in DB
+            cert = Certificate(
+                key=key,
+                key_hash=public_key_fingerprint,
+                body=cert_pem.decode()
+            )
+            cert.save()
+
+            return JsonResponse({"id": cert.pk})
+
+        except Exception as e:
+            return JsonResponse({"detail": str(e)}, status=500)
+
+    return JsonResponse({"detail": "Unsopported method"}, status=405)
