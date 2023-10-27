@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from core.models import Actions, Modules, log
 from utils.crypto import (
     cert_from_pem,
+    get_cert_issuer_fingerprint,
     get_key_fingerprint,
     key_from_pem,
     key_to_pem,
@@ -278,14 +279,21 @@ def key_import_view(request):
             else:
                 return JsonResponse({"detail": "Unknown key type"}, status=400)
 
-            # TODO: check if key with the same fingerprint already exists
-            # and add the private part only (possible on certificate import)
-            key = Key(
-                name=str(uuid.uuid4()),
-                private=key_pem.decode(),
-                length=private_key.key_size,
-                algo=algo,
-            )
+            try:
+                key_fingerprint = get_key_fingerprint(
+                    private_key.public_key()
+                ).decode()
+                key = Key.objects.get(fingerprint=key_fingerprint)
+                key.private = key_pem.decode()
+                key.fingerprint = key_fingerprint
+            except Key.DoesNotExist:
+                key = Key(
+                    name=str(uuid.uuid4()),
+                    private=key_pem.decode(),
+                    length=private_key.key_size,
+                    algo=algo,
+                )
+
             key.save()
             return JsonResponse({"id": key.pk})
 
@@ -323,11 +331,19 @@ def certificate_import_view(request):
                 )
                 key.save()
             # Now the Certificate itself
-            # TODO: search parent cert in DB
+            issuer_fingerprint = get_cert_issuer_fingerprint(certificate)
+            try:
+                parent = Certificate.objects.get(
+                    fingerprint=issuer_fingerprint
+                )
+            except Certificate.DoesNotExist:
+                parent = None
+
             cert = Certificate(
                 key=key,
+                parent=parent,
                 key_hash=public_key_fingerprint,
-                body=cert_pem.decode()
+                body=cert_pem.decode(),
             )
             cert.save()
 

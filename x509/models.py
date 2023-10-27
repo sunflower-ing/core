@@ -16,7 +16,7 @@ from utils.crypto import (
     csr_from_pem,
     csr_to_pem,
     get_cert_fingerprint,
-    get_cert_name_fingerprint,
+    get_cert_subject_fingerprint,
     get_key_fingerprint,
     key_from_pem,
     key_to_pem,
@@ -233,7 +233,7 @@ class Certificate(models.Model):
 
             self.sn = cert_object.serial_number
             self.fingerprint = get_cert_fingerprint(cert_object).decode()
-            self.name_hash = get_cert_name_fingerprint(cert_object).decode()
+            self.name_hash = get_cert_subject_fingerprint(cert_object).decode()
 
         return super().save(*args, **kwargs)
 

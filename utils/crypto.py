@@ -403,9 +403,16 @@ def get_cert_fingerprint(cert: x509.Certificate) -> bytes:
 
 
 # TODO: make hash type parameter
-def get_cert_name_fingerprint(cert: x509.Certificate) -> bytes:
+def get_cert_subject_fingerprint(cert: x509.Certificate) -> bytes:
     digest = hashes.Hash(hashes.SHA1())  # nosec
     digest.update(cert.subject.public_bytes())
+    return binascii.hexlify(digest.finalize())
+
+
+# TODO: make hash type parameter + combine with previous
+def get_cert_issuer_fingerprint(cert: x509.Certificate) -> bytes:
+    digest = hashes.Hash(hashes.SHA1())  # nosec
+    digest.update(cert.issuer.public_bytes())
     return binascii.hexlify(digest.finalize())
 
 
