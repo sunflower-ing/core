@@ -96,6 +96,7 @@ class CertificateSerialiser(serializers.ModelSerializer):
             "id",
             "sn",
             "csr",
+            "key",
             "parent",
             "subject",
             "imported",
