@@ -30,7 +30,9 @@ EKU_CHOICES = (
 
 class CSRParamsSerializer(serializers.Serializer):
     # Type of certificate (CA if null, Client auth, Server auth)
-    extendedKeyUsage = serializers.ChoiceField(choices=EKU_CHOICES)
+    extendedKeyUsage = serializers.ChoiceField(
+        choices=EKU_CHOICES, allow_blank=True
+    )
     # Common DN
     countryName = serializers.CharField(
         max_length=2, min_length=2, allow_blank=True
@@ -65,9 +67,7 @@ class CSRParamsSerializer(serializers.Serializer):
 
 class CSRSerializer(serializers.ModelSerializer):
     key = serializers.PrimaryKeyRelatedField(
-        many=False,
-        allow_null=True,
-        queryset=Key.objects.all(),
+        many=False, allow_null=True, queryset=Key.objects.all()
     )
     params = CSRParamsSerializer()
 
