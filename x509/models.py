@@ -180,6 +180,9 @@ class Certificate(models.Model):
     key_hash = models.CharField(
         verbose_name="Key hash", max_length=40, null=True, blank=True
     )
+    imported = models.BooleanField(
+        verbose_name="Imported", default=False, blank=True
+    )
     created_at = models.DateTimeField(
         verbose_name="Created at", auto_now_add=True
     )
@@ -259,6 +262,10 @@ class Certificate(models.Model):
     @property
     def subject(self) -> str:
         return self.as_object().subject.rfc4514_string()
+
+    @property
+    def num_signed(self) -> int:
+        return Certificate.objects.filter(parent=self).count()
 
 
 class CRL(models.Model):

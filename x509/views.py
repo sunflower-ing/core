@@ -344,6 +344,7 @@ def certificate_import_view(request):
                 parent=parent,
                 key_hash=public_key_fingerprint,
                 body=cert_pem.decode(),
+                imported=True,
             )
             cert.save()
 
