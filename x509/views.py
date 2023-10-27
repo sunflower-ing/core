@@ -307,6 +307,8 @@ def certificate_import_view(request):
             public_key_fingerprint = get_key_fingerprint(public_key).decode()
             try:
                 key = Key.objects.get(fingerprint=public_key_fingerprint)
+                key.used = True
+                key.save()
             except Key.DoesNotExist:
                 if isinstance(public_key, rsa.RSAPublicKey):
                     algo = "RSA"
@@ -317,6 +319,7 @@ def certificate_import_view(request):
                     public=key_to_pem(public_key).decode(),
                     length=public_key.key_size,
                     algo=algo,
+                    used=True,
                 )
                 key.save()
             # Now the Certificate itself
