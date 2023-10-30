@@ -1,10 +1,10 @@
 import uuid
 
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import permissions, status, viewsets
+from django.http import HttpResponse
+from rest_framework import authentication, permissions, status, viewsets
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from core.models import Actions, Modules, log
 from utils.crypto import (
@@ -265,9 +265,12 @@ def crl_view(request, ca_slug, format: str = "crl"):
         return HttpResponse(crl.as_pem())
 
 
-@csrf_exempt
-def key_import_view(request):
-    if request.method == "POST":
+class KeyImportView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def post(self, request):
+        # TODO: make it cleaner
+        # TODO: add logging
         try:
             key_pem: bytes = request.read()
             private_key = key_from_pem(key_pem=key_pem, private=True)
@@ -277,7 +280,9 @@ def key_import_view(request):
             elif isinstance(private_key, dsa.DSAPrivateKey):
                 algo = "DSA"
             else:
-                return JsonResponse({"detail": "Unknown key type"}, status=400)
+                return Response(
+                    data={"detail": "Unknown key type"}, status=400
+                )
 
             try:
                 key_fingerprint = get_key_fingerprint(
@@ -295,17 +300,18 @@ def key_import_view(request):
                 )
 
             key.save()
-            return JsonResponse({"id": key.pk})
+            return Response(KeySerializer(instance=key).data)
 
         except Exception as e:
-            return JsonResponse({"detail": str(e)}, status=500)
-
-    return JsonResponse({"detail": "Unsupported method"}, status=405)
+            return Response(data={"detail": str(e)}, status=500)
 
 
-@csrf_exempt
-def certificate_import_view(request):
-    if request.method == "POST":
+class CertificateImportView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def post(self, request):
+        # TODO: make it cleaner
+        # TODO: add logging
         try:
             cert_pem: bytes = request.read()
             certificate = cert_from_pem(cert_pem=cert_pem)
@@ -331,10 +337,12 @@ def certificate_import_view(request):
                 )
                 key.save()
             # Now the Certificate itself
-            issuer_fingerprint = get_cert_issuer_fingerprint(certificate)
+            issuer_fingerprint = get_cert_issuer_fingerprint(
+                certificate
+            ).decode()
             try:
                 parent = Certificate.objects.get(
-                    fingerprint=issuer_fingerprint
+                    name_hash=issuer_fingerprint
                 )
             except Certificate.DoesNotExist:
                 parent = None
@@ -348,9 +356,7 @@ def certificate_import_view(request):
             )
             cert.save()
 
-            return JsonResponse({"id": cert.pk})
+            return Response(CertificateSerialiser(instance=cert).data)
 
         except Exception as e:
-            return JsonResponse({"detail": str(e)}, status=500)
-
-    return JsonResponse({"detail": "Unsopported method"}, status=405)
+            return Response(data={"detail": str(e)}, status=500)

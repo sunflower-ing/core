@@ -16,12 +16,12 @@ from core.views import (
 )
 from ocsp.views import RequestLogViewSet, SourceViewSet, ocsp_view
 from x509.views import (
+    CertificateImportView,
     CertificateViewSet,
     CSRViewSet,
+    KeyImportView,
     KeyViewSet,
-    certificate_import_view,
     crl_view,
-    key_import_view,
 )
 
 router = routers.DefaultRouter()
@@ -54,12 +54,14 @@ urlpatterns = [
     ),
     path("v1/api/me/", UserView.as_view(), name="user_profile"),
     path("v1/api/", include(router.urls)),
-    path("crl/<str:ca_slug>.<str:format>", crl_view, name="crl"),
-    path("ocsp/", ocsp_view, name="ocsp"),
-    path("import/key/", key_import_view, name="key_import_view"),
     path(
-        "import/certificate/",
-        certificate_import_view,
+        "v1/api/import/key/", KeyImportView.as_view(), name="key_import_view"
+    ),
+    path(
+        "v1/api/import/certificate/",
+        CertificateImportView.as_view(),
         name="certificate_import_view",
     ),
+    path("crl/<str:ca_slug>.<str:format>", crl_view, name="crl"),
+    path("ocsp/", ocsp_view, name="ocsp"),
 ]
