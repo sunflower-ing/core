@@ -12,12 +12,12 @@ from utils.crypto import (
 from x509.models import Certificate
 
 from .models import (
-    RequestLog,
-    Source,
-    OCSP_RESULT_OK,
     OCSP_RESULT_ERROR,
+    OCSP_RESULT_OK,
     OCSP_RESULT_REVOKED,
     OCSP_RESULT_UNKNOWN,
+    RequestLog,
+    Source,
 )
 from .serializers import RequestLogSerializer, SourceSerializer
 
@@ -27,15 +27,20 @@ def ocsp_view(request):
     if request.method == "POST":
         req_data = read_ocsp_request(request.body)
         try:
-            # TODO: Use fingerprint to search certificate
-            cert = Certificate.objects.get(sn=req_data.get("serial_number"))
+            issuer = Certificate.objects.get(
+                name_hash=req_data.get("issuer_name_hash"),
+                key_hash=req_data.get("issuer_key_hash"),
+            )
+            cert = Certificate.objects.get(
+                sn=req_data.get("serial_number"), parent=issuer
+            )
             if not cert.revoked:
                 response = create_ocsp_response(
                     cert=cert.as_object(),
                     issuer=cert.parent.as_object(),
                     cert_status=ocsp.OCSPCertStatus.GOOD,
-                    responder_cert=cert.parent.as_object(),
-                    responder_key=cert.parent.csr.key.private_as_object(),
+                    responder_cert=issuer.as_object(),  # TODO: should be one
+                    responder_key=issuer.key.private_as_object(),  # for app
                 )
                 log = RequestLog(
                     cert=cert,
@@ -46,10 +51,10 @@ def ocsp_view(request):
             else:
                 response = create_ocsp_response(
                     cert=cert.as_object(),
-                    issuer=cert.parent.as_object(),
+                    issuer=issuer.as_object(),
                     cert_status=ocsp.OCSPCertStatus.REVOKED,
-                    responder_cert=cert.parent.as_object(),
-                    responder_key=cert.parent.csr.key.private_as_object(),
+                    responder_cert=issuer.as_object(),  # TODO: should be one
+                    responder_key=issuer.key.private_as_object(),  # for app
                     revocation_time=cert.revoked_at,
                     revocation_reason=cert.revocation_reason,
                 )

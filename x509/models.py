@@ -16,7 +16,7 @@ from utils.crypto import (
     csr_from_pem,
     csr_to_pem,
     get_cert_fingerprint,
-    get_cert_name_fingerprint,
+    get_cert_subject_fingerprint,
     get_key_fingerprint,
     key_from_pem,
     key_to_pem,
@@ -180,6 +180,9 @@ class Certificate(models.Model):
     key_hash = models.CharField(
         verbose_name="Key hash", max_length=40, null=True, blank=True
     )
+    imported = models.BooleanField(
+        verbose_name="Imported", default=False, blank=True
+    )
     created_at = models.DateTimeField(
         verbose_name="Created at", auto_now_add=True
     )
@@ -233,7 +236,7 @@ class Certificate(models.Model):
 
             self.sn = cert_object.serial_number
             self.fingerprint = get_cert_fingerprint(cert_object).decode()
-            self.name_hash = get_cert_name_fingerprint(cert_object).decode()
+            self.name_hash = get_cert_subject_fingerprint(cert_object).decode()
 
         return super().save(*args, **kwargs)
 
@@ -259,6 +262,10 @@ class Certificate(models.Model):
     @property
     def subject(self) -> str:
         return self.as_object().subject.rfc4514_string()
+
+    @property
+    def num_signed(self) -> int:
+        return Certificate.objects.filter(parent=self).count()
 
 
 class CRL(models.Model):

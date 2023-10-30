@@ -98,11 +98,13 @@ class CertificateSerialiser(serializers.ModelSerializer):
             "csr",
             "parent",
             "subject",
+            "imported",
             "created_at",
             "revoked",
             "revoked_at",
             "revocation_reason",
             "body",
             "fingerprint",
+            "num_signed",
         )
         read_only_fields = ["subject", "sn"]
