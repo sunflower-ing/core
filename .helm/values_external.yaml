@@ -4,3 +4,7 @@ tolerations:
   - key: "node-role.kubernetes.io/dmz"
     operator: "Exists"
     effect: "NoSchedule"
+
+application:
+  configs:
+    FORCE_SCRIPT_NAME: ""
