@@ -374,6 +374,7 @@ def create_ocsp_response(
     responder_key: rsa.RSAPrivateKey | dsa.DSAPrivateKey,
     revocation_time: datetime.datetime = None,
     revocation_reason: str = None,
+    nonce: x509.OCSPNonce = None,
 ) -> ocsp.OCSPResponse:
     builder = ocsp.OCSPResponseBuilder()
     builder = builder.add_response(
@@ -382,12 +383,14 @@ def create_ocsp_response(
         algorithm=hashes.SHA256(),  # For compatibility reasons
         cert_status=cert_status,
         this_update=datetime.datetime.now(),
-        next_update=datetime.datetime.now(),
+        next_update=datetime.datetime.now() + datetime.timedelta(minutes=1),
         revocation_time=revocation_time,
         revocation_reason=getattr(x509.ReasonFlags, revocation_reason)
         if revocation_reason
         else None,
     ).responder_id(ocsp.OCSPResponderEncoding.HASH, responder_cert)
+    if nonce:
+        builder = builder.add_extension(nonce, critical=False)
 
     response = builder.sign(responder_key, hashes.SHA256())
     return response
