@@ -34,6 +34,26 @@ DISTINGUISHED_NAME = LOCALITY_DN | ORGANIZATION_DN | ENDUSER_DN
 
 REVOCATION_REASONS = {reason.name: reason.value for reason in x509.ReasonFlags}
 
+HASHES = {
+    "sha1": hashes.SHA1,
+    "sha512-224": hashes.SHA512_224,
+    "sha512-256": hashes.SHA512_256,
+    "sha224": hashes.SHA224,
+    "sha256": hashes.SHA256,
+    "sha384": hashes.SHA384,
+    "sha512": hashes.SHA512,
+    "sha3-224": hashes.SHA3_224,
+    "sha3-256": hashes.SHA3_256,
+    "sha3-384": hashes.SHA3_384,
+    "sha3-512": hashes.SHA3_512,
+    "shake128": hashes.SHAKE128,
+    "shake256": hashes.SHAKE256,
+    "md5": hashes.MD5,
+    "blake2b": hashes.BLAKE2b,
+    "blake2s": hashes.BLAKE2s,
+    "sm3": hashes.SM3,
+}
+
 
 def _read_pkcs12(
     path: pathlib.Path, password: bytes = None
@@ -375,12 +395,13 @@ def create_ocsp_response(
     revocation_time: datetime.datetime = None,
     revocation_reason: str = None,
     nonce: x509.OCSPNonce = None,
+    algo: str = "sha1",
 ) -> ocsp.OCSPResponse:
     builder = ocsp.OCSPResponseBuilder()
     builder = builder.add_response(
         cert=cert,
         issuer=issuer,
-        algorithm=hashes.SHA256(),  # For compatibility reasons
+        algorithm=HASHES[algo](),
         cert_status=cert_status,
         this_update=datetime.datetime.now(),
         next_update=datetime.datetime.now() + datetime.timedelta(minutes=1),

@@ -40,6 +40,7 @@ def ocsp_view(request):
             cert = Certificate.objects.get(
                 sn=req_data.get("serial_number"), parent=issuer
             )
+
             if not cert.revoked:
                 response = create_ocsp_response(
                     cert=cert.as_object(),
@@ -48,6 +49,7 @@ def ocsp_view(request):
                     responder_cert=issuer.as_object(),  # TODO: should be one
                     responder_key=issuer.key.private_as_object(),  # for app
                     nonce=ocsp_nonce,
+                    algo=req_data.get("hash_algorithm"),
                 )
                 log = RequestLog(
                     cert=cert,
@@ -65,6 +67,7 @@ def ocsp_view(request):
                     revocation_time=cert.revoked_at,
                     revocation_reason=cert.revocation_reason,
                     nonce=ocsp_nonce,
+                    algo=req_data.get("hash_algorithm"),
                 )
                 log = RequestLog(
                     cert=cert,
