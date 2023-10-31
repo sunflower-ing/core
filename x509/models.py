@@ -257,11 +257,26 @@ class Certificate(models.Model):
 
     @property
     def name(self) -> str:
-        return self.csr.name if self.csr else "(imported)"
+        return self.csr.name if self.csr else f"(imported) SN: {self.sn}"
 
     @property
     def subject(self) -> str:
         return self.as_object().subject.rfc4514_string()
+
+    @property
+    def cn(self) -> str:
+        for attr in self.as_object().subject:
+            if attr.rfc4514_attribute_name == "CN":
+                return attr.value
+
+    @property
+    def is_ca(self) -> bool:
+        if self.csr:
+            return self.csr.ca
+        for ext in self.as_object().extensions:
+            if ext.value.oid._name == "basicConstraints":
+                return ext.value.ca
+        return False
 
     @property
     def num_signed(self) -> int:

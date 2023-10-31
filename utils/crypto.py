@@ -87,18 +87,26 @@ def key_to_pem(
     | dsa.DSAPrivateKey
     | dsa.DSAPublicKey,
     private: bool = False,
+    passphrase: bytes = None,
 ) -> bytes:
     if private:
-        private_key = key  # type: ignore
-        private_pem = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption(),
-        )
+        if passphrase:
+            private_pem = key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.BestAvailableEncryption(
+                    passphrase
+                ),
+            )
+        else:
+            private_pem = key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
         return private_pem
 
-    public_key = key  # type: ignore
-    public_pem = public_key.public_bytes(
+    public_pem = key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
@@ -106,16 +114,63 @@ def key_to_pem(
     return public_pem
 
 
+def key_to_der(
+    key: rsa.RSAPrivateKey
+    | rsa.RSAPublicKey
+    | dsa.DSAPrivateKey
+    | dsa.DSAPublicKey,
+    private: bool = False,
+    passphrase: bytes = None,
+) -> bytes:
+    if private:
+        if passphrase:
+            private_der = key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.BestAvailableEncryption(
+                    passphrase
+                ),
+            )
+        else:
+            private_der = key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+
+        return private_der
+
+    public_der = key.public_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+
+    return public_der
+
+
 def key_from_pem(
-    key_pem: bytes, private: bool = False
+    key_pem: bytes, private: bool = False, passphrase: bytes = None
 ) -> rsa.RSAPrivateKey | rsa.RSAPublicKey | dsa.DSAPrivateKey | dsa.DSAPublicKey:  # noqa
     if private:
         private_key = serialization.load_pem_private_key(  # type: ignore  # noqa E501
-            key_pem, password=None
+            key_pem, password=passphrase
         )
         return private_key
 
     public_key = serialization.load_pem_public_key(key_pem)  # type: ignore
+    return public_key
+
+
+def key_from_der(
+    key_der: bytes, private: bool = False, passphrase: bytes = None
+) -> rsa.RSAPrivateKey | rsa.RSAPublicKey | dsa.DSAPrivateKey | dsa.DSAPublicKey:  # noqa
+    if private:
+        private_key = serialization.load_der_private_key(  # type: ignore  # noqa E501
+            key_der, password=passphrase
+        )
+        return private_key
+
+    public_key = serialization.load_der_public_key(key_der)  # type: ignore
     return public_key
 
 
@@ -325,6 +380,14 @@ def cert_to_pem(cert: x509.Certificate) -> bytes:
 
 def cert_from_pem(cert_pem: bytes) -> x509.Certificate:
     return x509.load_pem_x509_certificate(cert_pem)
+
+
+def cert_to_der(cert: x509.Certificate) -> bytes:
+    return cert.public_bytes(serialization.Encoding.DER)
+
+
+def cert_from_der(cert_der: bytes) -> x509.Certificate:
+    return x509.load_der_x509_certificate(cert_der)
 
 
 def make_crl(
