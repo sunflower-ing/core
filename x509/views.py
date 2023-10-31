@@ -9,14 +9,24 @@ from rest_framework.views import APIView
 from core.models import Actions, Modules, log
 from utils.crypto import (
     cert_from_pem,
+    cert_to_der,
+    cert_to_pem,
     get_cert_issuer_fingerprint,
     get_key_fingerprint,
     key_from_pem,
+    key_to_der,
     key_to_pem,
 )
 
 from .models import CRL, CSR, Certificate, Key
 from .serializers import CertificateSerialiser, CSRSerializer, KeySerializer
+
+CTYPE = {
+    "pem": "application/x-pem-file",
+    "der": "application/pkcs8",
+    "der_ca": "application/x-x509-ca-cert",
+    "der_enduser": "application/x-x509-user-cert",
+}
 
 
 class KeyViewSet(viewsets.ModelViewSet):
@@ -341,9 +351,7 @@ class CertificateImportView(APIView):
                 certificate
             ).decode()
             try:
-                parent = Certificate.objects.get(
-                    name_hash=issuer_fingerprint
-                )
+                parent = Certificate.objects.get(name_hash=issuer_fingerprint)
             except Certificate.DoesNotExist:
                 parent = None
 
@@ -360,3 +368,79 @@ class CertificateImportView(APIView):
 
         except Exception as e:
             return Response(data={"detail": str(e)}, status=500)
+
+
+class KeyExportView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def get(self, request, key_id, *args, **kwargs):
+        key_type = request.query_params.get("type", "public")
+        key_format = request.query_params.get("format", "pem")
+
+        try:
+            key = Key.objects.get(pk=key_id)
+            if key_type == "private":
+                if not key.private:
+                    return Response(
+                        data={"detail": "No private part"}, status=404
+                    )
+
+                if key_format == "pem":
+                    data = key_to_pem(key.private_as_object(), private=True)
+                else:
+                    data = key_to_der(key.private_as_object(), private=True)
+
+                response = HttpResponse(data, content_type=CTYPE[key_format])
+                response[
+                    "Content-Disposition"
+                ] = f"attachment; filename='{key.name}'"
+
+                return response
+            else:
+                if key_format == "pem":
+                    data = key_to_pem(key.public_as_object())
+                else:
+                    data = key_to_der(key.public_as_object())
+
+                response = HttpResponse(data, content_type=CTYPE[key_format])
+                response[
+                    "Content-Disposition"
+                ] = f"attachment; filename='{key.name}'"
+
+                return response
+
+        except Key.DoesNotExist:
+            return Response(data={"detail": "Not found"}, status=404)
+
+
+class CertificateExportView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def get(self, request, cert_id, *args, **kwargs):
+        cert_format = request.query_params.get("format", "pem")
+
+        try:
+            cert = Certificate.objects.get(pk=cert_id)
+
+            if cert_format == "pem":
+                response = HttpResponse(
+                    cert_to_pem(cert.as_object()),
+                    content_type=CTYPE[cert_format],
+                )
+
+            else:
+                response = HttpResponse(
+                    cert_to_der(cert.as_object()),
+                    content_type=CTYPE["der_ca"]
+                    if cert.is_ca
+                    else CTYPE["der_enduser"],
+                )
+
+            response[
+                "Content-Disposition"
+            ] = f"attachment; filename='{cert.cn}'"
+
+            return response
+
+        except Certificate.DoesNotExist:
+            return Response(data={"detail": "Not found"}, status=404)

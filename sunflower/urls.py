@@ -16,9 +16,11 @@ from core.views import (
 )
 from ocsp.views import RequestLogViewSet, SourceViewSet, ocsp_view
 from x509.views import (
+    CertificateExportView,
     CertificateImportView,
     CertificateViewSet,
     CSRViewSet,
+    KeyExportView,
     KeyImportView,
     KeyViewSet,
     crl_view,
@@ -61,6 +63,16 @@ urlpatterns = [
         "v1/api/import/certificate/",
         CertificateImportView.as_view(),
         name="certificate_import_view",
+    ),
+    path(
+        "v1/api/export/key/<int:key_id>/",
+        KeyExportView.as_view(),
+        name="key_export_view",
+    ),
+    path(
+        "v1/api/export/certificate/<int:cert_id>/",
+        CertificateExportView.as_view(),
+        name="certificate_export_view",
     ),
     path("crl/<str:ca_slug>.<str:format>", crl_view, name="crl"),
     path("ocsp/", ocsp_view, name="ocsp"),
