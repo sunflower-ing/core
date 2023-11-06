@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -150,6 +151,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ),
     "URL_FORMAT_OVERRIDE": None,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ],
 }
 
 SIMPLE_JWT = {
@@ -163,5 +167,7 @@ SIMPLE_JWT = {
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "")
 CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

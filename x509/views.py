@@ -2,6 +2,7 @@ import uuid
 
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import authentication, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -26,6 +27,7 @@ CTYPE = {
     "der": "application/pkcs8",
     "der_ca": "application/x-x509-ca-cert",
     "der_enduser": "application/x-x509-user-cert",
+    "pkcs12": "application/x-pkcs12",
 }
 
 
@@ -33,6 +35,8 @@ class KeyViewSet(viewsets.ModelViewSet):
     queryset = Key.objects.all()
     serializer_class = KeySerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["name", "algo", "length", "used", "fingerprint"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -112,6 +116,8 @@ class CSRViewSet(viewsets.ModelViewSet):
     queryset = CSR.objects.all()
     serializer_class = CSRSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["name", "signed", "ca", "path_length"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -195,6 +201,15 @@ class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerialiser
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = [
+        "sn",
+        "parent",
+        "imported",
+        "revoked",
+        "revocation_reason",
+        "fingerprint",
+    ]
 
     http_method_names = ["get", "post", "put"]
 
