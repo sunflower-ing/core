@@ -3,15 +3,17 @@ import uuid
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import (
     authentication,
     filters,
+    generics,
     permissions,
     status,
     viewsets,
 )
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from core.models import Actions, Modules, log
 from utils.crypto import (
@@ -109,6 +111,40 @@ class KeyViewSet(viewsets.ModelViewSet):
         )
         return super().retrieve(request, *args, **kwargs)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="used",
+                description="Filter by is key already used.Can be either true or false",  # noqa
+                required=False,
+                type=OpenApiTypes.BOOL,
+            ),
+            OpenApiParameter(
+                name="algo",
+                description="Filter by algorithm. Can be either RSA or DSA",
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
+            OpenApiParameter(
+                name="length",
+                description="Filter by key length. Can be 1024, 2048, 3072, 4096 or 8192",  # noqa
+                required=False,
+                type=OpenApiTypes.INT,
+            ),
+            OpenApiParameter(
+                name="fingerprint",
+                description="Filter by fingerprint",
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
+            OpenApiParameter(
+                name="search",
+                description="Search by name",
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
+        ]
+    )
     def list(self, request, *args, **kwargs):
         log(
             user=request.user,
@@ -195,6 +231,34 @@ class CSRViewSet(viewsets.ModelViewSet):
         )
         return super().retrieve(request, *args, **kwargs)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="signed",
+                description="Filter by is CSR already signed. Can be either true or false",  # noqa
+                required=False,
+                type=OpenApiTypes.BOOL,
+            ),
+            OpenApiParameter(
+                name="ca",
+                description="Filter by is CSR is CA. Can be either true or false",  # noqa
+                required=False,
+                type=OpenApiTypes.BOOL,
+            ),
+            OpenApiParameter(
+                name="path_length",
+                description="Filter by path length. Integer from 0 to N",
+                required=False,
+                type=OpenApiTypes.INT,
+            ),
+            OpenApiParameter(
+                name="search",
+                description="Search by name",
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
+        ]
+    )
     def list(self, request, *args, **kwargs):
         log(
             user=request.user,
@@ -281,6 +345,52 @@ class CertificateViewSet(viewsets.ModelViewSet):
         )
         return super().retrieve(request, *args, **kwargs)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="sn",
+                description="Filter by Serial Number",
+                required=False,
+                type=OpenApiTypes.INT,
+            ),
+            OpenApiParameter(
+                name="parent",
+                description="Filter by parent ID. Integer or null for self-signed",  # noqa
+                required=False,
+                type=OpenApiTypes.INT,
+            ),
+            OpenApiParameter(
+                name="imported",
+                description="Filter by is Certificate imported. Can be either true or false",  # noqa
+                required=False,
+                type=OpenApiTypes.BOOL,
+            ),
+            OpenApiParameter(
+                name="revoked",
+                description="Filter by is Certificate revoked. Can be either true or false",  # noqa
+                required=False,
+                type=OpenApiTypes.BOOL,
+            ),
+            OpenApiParameter(
+                name="revocation_reason",
+                description="Filter by revocation reason. String (for possible reasons look at the PUT method)",  # noqa
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
+            OpenApiParameter(
+                name="fingerprint",
+                description="Filter by fingerprint",
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
+            OpenApiParameter(
+                name="search",
+                description="Search by name",
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
+        ]
+    )
     def list(self, request, *args, **kwargs):
         log(
             user=request.user,
@@ -299,8 +409,9 @@ def crl_view(request, ca_slug, format: str = "crl"):
         return HttpResponse(crl.as_pem())
 
 
-class KeyImportView(APIView):
+class KeyImportView(generics.GenericAPIView):
     authentication_classes = [authentication.TokenAuthentication]
+    serializer_class = KeySerializer
 
     def post(self, request):
         # TODO: make it cleaner
@@ -340,8 +451,9 @@ class KeyImportView(APIView):
             return Response(data={"detail": str(e)}, status=500)
 
 
-class CertificateImportView(APIView):
+class CertificateImportView(generics.GenericAPIView):
     authentication_classes = [authentication.TokenAuthentication]
+    serializer_class = CertificateSerialiser
 
     def post(self, request):
         # TODO: make it cleaner
@@ -394,12 +506,31 @@ class CertificateImportView(APIView):
             return Response(data={"detail": str(e)}, status=500)
 
 
-class KeyExportView(APIView):
+class KeyExportView(generics.RetrieveAPIView):
     authentication_classes = [authentication.TokenAuthentication]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="type",
+                description="Key type. Can be either private or public. Default is public",  # noqa
+                required=False,
+                type=OpenApiTypes.STR,
+                default="private",
+            ),
+            OpenApiParameter(
+                name="format",
+                description="Export format. Can be either PEM or DER (p8/key). Default is pem",  # noqa
+                required=False,
+                type=OpenApiTypes.STR,
+                default="pem",
+            ),
+        ],
+        responses={200: OpenApiTypes.BINARY},
+    )
     def get(self, request, key_id, *args, **kwargs):
         key_type = request.query_params.get("type", "public")
-        key_format = request.query_params.get("format", "pem")
+        key_format = request.query_params.get("format", "pem").lower()
 
         try:
             key = Key.objects.get(pk=key_id)
@@ -437,11 +568,23 @@ class KeyExportView(APIView):
             return Response(data={"detail": "Not found"}, status=404)
 
 
-class CertificateExportView(APIView):
+class CertificateExportView(generics.GenericAPIView):
     authentication_classes = [authentication.TokenAuthentication]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="format",
+                description="Export format. Can be PEM, DER (der/crt) or PKCS12 (p12/pfx). Default is pem",  # noqa
+                required=False,
+                type=OpenApiTypes.STR,
+                default="pem",
+            )
+        ],
+        responses={200: OpenApiTypes.BINARY},
+    )
     def get(self, request, cert_id, *args, **kwargs):
-        cert_format = request.query_params.get("format", "pem")
+        cert_format = request.query_params.get("format", "pem").lower()
 
         try:
             cert = Certificate.objects.get(pk=cert_id)
@@ -459,6 +602,7 @@ class CertificateExportView(APIView):
                     if cert.is_ca
                     else CTYPE["der_enduser"],
                 )
+            # TODO: Add PKCS12
 
             response[
                 "Content-Disposition"
