@@ -1,8 +1,7 @@
 from django.contrib.auth.models import Group, Permission, User
 from django.http import JsonResponse
-from rest_framework import permissions, status, viewsets
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .models import Actions, LogEntry, Modules, log
 from .serializers import (
@@ -17,8 +16,9 @@ def index(request):
     return JsonResponse({"i'm": "ok"})
 
 
-class UserView(APIView):
+class UserView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SystemUserSerializer
 
     def get(self, request):
         return Response(SystemUserSerializer(instance=request.user).data)

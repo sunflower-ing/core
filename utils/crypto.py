@@ -216,7 +216,6 @@ def make_cert(
     cert = (
         x509.CertificateBuilder()
         .public_key(csr.public_key())
-        # .subject_name(csr.subject)
         .serial_number(_random_serial())
         .not_valid_before(datetime.datetime.utcnow())
         .not_valid_after(
@@ -226,10 +225,10 @@ def make_cert(
         .add_extension(  # FIXME: there MUST be current cert's key
             x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()),
             critical=False,
-        )
+        )  # TODO: ca_key must go to x509.AuthorityKeyIdentifier
     )
 
-    if issuer_dn:
+    if issuer_dn:  # If true DN will inherit from issuer (except ENDUSER_DN)
         x509_names = []
 
         for dn_key, dn_value in (LOCALITY_DN | ORGANIZATION_DN).items():
@@ -258,7 +257,7 @@ def make_cert(
     else:
         cert = cert.issuer_name(ca_cert.subject)
 
-    if data.get("ca") is True:
+    if data.get("ca") is True:  # TODO: rewrite this
         if not data.get("path_length"):
             data.path_length = 1
             # TODO: Get from parent and decrease
@@ -289,7 +288,7 @@ def make_cert(
             )
         )
 
-    else:
+    else:  # TODO: rewrite this as well
         cert = cert.add_extension(
             x509.BasicConstraints(ca=False, path_length=None), critical=True
         )
