@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django_filters',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -150,6 +152,10 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ),
     "URL_FORMAT_OVERRIDE": None,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SIMPLE_JWT = {
@@ -160,8 +166,22 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Sunflower API',
+    'DESCRIPTION': 'API schema for Sunflower PKI ecosystem',
+    'VERSION': '1.0.0',
+    'SCHEMA_PATH_PREFIX': '/api/v[0-9]',
+    # 'COMPONENT_SPLIT_REQUEST': True,
+    'SERVE_INCLUDE_SCHEMA': False,
+    'AUTHENTICATION_WHITELIST': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
+    ],
+}
+
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "")
 CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

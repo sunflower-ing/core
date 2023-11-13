@@ -15,6 +15,7 @@ django-filter = "*"
 djangorestframework-simplejwt = {extras = ["crypto"], version = "*"}
 celery = "*"
 redis = "*"
+drf-spectacular = "*"
 
 [dev-packages]
 pytest = "*"
