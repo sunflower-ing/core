@@ -49,5 +49,5 @@ class RequestLog(models.Model):
     def __str__(self) -> str:
         return f"{self.date} {self.cert.subject} {self.addr}"
 
-    def result_display(self):
+    def result_display(self) -> str:
         return self.get_result_display()
