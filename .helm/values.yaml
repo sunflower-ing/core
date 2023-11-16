@@ -23,7 +23,7 @@ application:
     enabled: true
 
   configs:
-    FORCE_SCRIPT_NAME: /backend
+    FORCE_SCRIPT_NAME: /
     DB_ENGINE: django.db.backends.postgresql
     DB_NAME: "sunflower-db"
     # DB_HOST: localhost
