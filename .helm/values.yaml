@@ -76,6 +76,7 @@ application:
       className: ""
       annotations:
         nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
         nginx.ingress.kubernetes.io/rewrite-target: /ocsp/$1
       hosts:
         - host: ocsp.example.local
@@ -93,6 +94,7 @@ application:
       className: ""
       annotations:
         nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
       hosts:
         - host: api.example.local
           paths:
@@ -109,6 +111,7 @@ application:
       className: ""
       annotations:
         nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
         nginx.ingress.kubernetes.io/rewrite-target: /crl/$1
       hosts:
         - host: crl.example.local
