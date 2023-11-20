@@ -121,6 +121,10 @@ class CSR(models.Model):
 
     body = models.TextField(verbose_name="CSR", blank=True)
     params = models.JSONField(verbose_name="Certificate params", blank=True)
+    key_usage = models.JSONField(verbose_name="Key Usage", blank=True)
+    extended_key_usage = models.JSONField(
+        verbose_name="Extended Key Usage", blank=True
+    )
     ca = models.BooleanField(verbose_name="CA", default=False)
     path_length = models.SmallIntegerField(
         verbose_name="Path length", null=True, blank=True
@@ -213,7 +217,10 @@ class Certificate(models.Model):
                         ca_cert=self.csr.as_object(),
                         ca_key=self.csr.key.private_as_object(),
                         csr=self.csr.as_object(),
+                        key=self.csr.key.private_as_object(),
                         data=self.csr.params,
+                        ku=self.csr.key_usage,
+                        eku=self.csr.extended_key_usage,
                         self_sign=True,
                         issuer_dn=self.csr.params.get("issuerDN"),
                     )
@@ -222,7 +229,10 @@ class Certificate(models.Model):
                         ca_cert=self.parent.as_object(),
                         ca_key=self.parent.csr.key.private_as_object(),
                         csr=self.csr.as_object(),
+                        key=self.csr.key.private_as_object(),
                         data=self.csr.params,
+                        ku=self.csr.key_usage,
+                        eku=self.csr.extended_key_usage,
                         self_sign=False,
                         issuer_dn=self.csr.params.get("issuerDN"),
                     )
@@ -264,10 +274,11 @@ class Certificate(models.Model):
         return self.as_object().subject.rfc4514_string()
 
     @property
-    def cn(self) -> str:
+    def cn(self) -> str | None:
         for attr in self.as_object().subject:
             if attr.rfc4514_attribute_name == "CN":
-                return attr.value
+                return str(attr.value)
+        return None
 
     @property
     def is_ca(self) -> bool:

@@ -30,9 +30,9 @@ EKU_CHOICES = (
 
 class CSRParamsSerializer(serializers.Serializer):
     # Type of certificate (CA if null, Client auth, Server auth)
-    extendedKeyUsage = serializers.ChoiceField(
-        choices=EKU_CHOICES, allow_null=True
-    )
+    # extendedKeyUsage = serializers.ChoiceField(
+    #     choices=EKU_CHOICES, allow_null=True
+    # )
     # Common DN
     countryName = serializers.CharField(
         max_length=2, min_length=2, allow_blank=True
@@ -65,11 +65,39 @@ class CSRParamsSerializer(serializers.Serializer):
     )
 
 
+class KeyUsageSerializer(serializers.Serializer):
+    key_cert_sign = serializers.BooleanField(default=False)
+    crl_sign = serializers.BooleanField(default=False)
+    digital_signature = serializers.BooleanField(default=False)
+    key_encipherment = serializers.BooleanField(default=False)
+    data_encipherment = serializers.BooleanField(default=False)
+    key_agreement = serializers.BooleanField(default=False)
+    content_commitment = serializers.BooleanField(default=False)
+    encipher_only = serializers.BooleanField(default=False)
+    decipher_only = serializers.BooleanField(default=False)
+
+
+class ExtendedKeyUsageSerializer(serializers.Serializer):
+    server_auth = serializers.BooleanField(default=False)
+    client_auth = serializers.BooleanField(default=False)
+    code_signing = serializers.BooleanField(default=False)
+    email_protection = serializers.BooleanField(default=False)
+    time_stamping = serializers.BooleanField(default=False)
+    ocsp_signing = serializers.BooleanField(default=False)
+    smartcard_logon = serializers.BooleanField(default=False)
+    kerberos_pkinit_kdc = serializers.BooleanField(default=False)
+    ipsec_ike = serializers.BooleanField(default=False)
+    certificate_transparency = serializers.BooleanField(default=False)
+    any_extended_key_usage = serializers.BooleanField(default=False)
+
+
 class CSRSerializer(serializers.ModelSerializer):
     key = serializers.PrimaryKeyRelatedField(
         many=False, allow_null=True, queryset=Key.objects.all()
     )
     params = CSRParamsSerializer()
+    key_usage = KeyUsageSerializer()
+    extended_key_usage = ExtendedKeyUsageSerializer()
 
     class Meta:
         model = CSR
@@ -84,6 +112,7 @@ class CSRSerializer(serializers.ModelSerializer):
             "ca",
             "path_length",
             "params",
+            "eku",
             "body",
         )
         read_only_fields = ["slug", "signed", "subject"]
