@@ -112,10 +112,11 @@ class CSRSerializer(serializers.ModelSerializer):
             "ca",
             "path_length",
             "params",
-            "eku",
+            "key_usage",
+            "extended_key_usage",
             "body",
         )
-        read_only_fields = ["slug", "signed", "subject"]
+        read_only_fields = ["slug", "signed", "subject", "body", "created_at"]
 
 
 class CertificateSerialiser(serializers.ModelSerializer):
