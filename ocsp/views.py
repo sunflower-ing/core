@@ -2,6 +2,7 @@ from cryptography.x509 import ocsp
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import permissions, viewsets
+from rest_framework.response import Response
 
 from core.models import Actions, Modules, log
 from utils.crypto import (
@@ -53,8 +54,8 @@ def ocsp_view(request):
                 )
                 log = RequestLog(
                     cert=cert,
-                    host=request.META.get('REMOTE_HOST'),
-                    addr=request.META.get('REMOTE_ADDR'),
+                    host=request.META.get("REMOTE_HOST"),
+                    addr=request.META.get("REMOTE_ADDR"),
                     result=OCSP_RESULT_OK,
                 )
             else:
@@ -71,8 +72,8 @@ def ocsp_view(request):
                 )
                 log = RequestLog(
                     cert=cert,
-                    host=request.META.get('REMOTE_HOST'),
-                    addr=request.META.get('REMOTE_ADDR'),
+                    host=request.META.get("REMOTE_HOST"),
+                    addr=request.META.get("REMOTE_ADDR"),
                     result=OCSP_RESULT_REVOKED,
                 )
 
@@ -86,8 +87,8 @@ def ocsp_view(request):
         except Certificate.DoesNotExist:
             log = RequestLog(
                 cert=None,
-                host=request.META.get('REMOTE_HOST'),
-                addr=request.META.get('REMOTE_ADDR'),
+                host=request.META.get("REMOTE_HOST"),
+                addr=request.META.get("REMOTE_ADDR"),
                 result=OCSP_RESULT_UNKNOWN,
             )
             log.save()
@@ -103,8 +104,8 @@ def ocsp_view(request):
 
     log = RequestLog(
         cert=None,
-        host=request.META.get('REMOTE_HOST'),
-        addr=request.META.get('REMOTE_ADDR'),
+        host=request.META.get("REMOTE_HOST"),
+        addr=request.META.get("REMOTE_ADDR"),
         result=OCSP_RESULT_ERROR,
     )
     log.save()
@@ -139,7 +140,7 @@ class SourceViewSet(viewsets.ModelViewSet):
             entity="SOURCE",
             object_id=instance.pk,
         )
-        return super().create(request, *args, **kwargs)
+        return Response(SourceSerializer(instance=instance).data)
 
     def update(self, request, *args, **kwargs):
         log(

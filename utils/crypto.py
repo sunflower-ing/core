@@ -150,7 +150,9 @@ def key_to_der(
 
 def key_from_pem(
     key_pem: bytes, private: bool = False, passphrase: bytes = None
-) -> rsa.RSAPrivateKey | rsa.RSAPublicKey | dsa.DSAPrivateKey | dsa.DSAPublicKey:  # noqa
+) -> (
+    rsa.RSAPrivateKey | rsa.RSAPublicKey | dsa.DSAPrivateKey | dsa.DSAPublicKey
+):  # noqa
     if private:
         private_key = serialization.load_pem_private_key(  # type: ignore  # noqa E501
             key_pem, password=passphrase
@@ -163,7 +165,9 @@ def key_from_pem(
 
 def key_from_der(
     key_der: bytes, private: bool = False, passphrase: bytes = None
-) -> rsa.RSAPrivateKey | rsa.RSAPublicKey | dsa.DSAPrivateKey | dsa.DSAPublicKey:  # noqa
+) -> (
+    rsa.RSAPrivateKey | rsa.RSAPublicKey | dsa.DSAPrivateKey | dsa.DSAPublicKey
+):  # noqa
     if private:
         private_key = serialization.load_der_private_key(  # type: ignore  # noqa E501
             key_der, password=passphrase
@@ -209,7 +213,10 @@ def make_cert(
     ca_cert: x509.Certificate | x509.CertificateSigningRequest,
     ca_key: rsa.RSAPrivateKey | dsa.DSAPrivateKey,
     csr: x509.CertificateSigningRequest,
+    key: rsa.RSAPrivateKey | dsa.DSAPrivateKey,
     data: dict,
+    ku: dict,
+    eku: dict,
     self_sign: bool = False,
     issuer_dn: bool = False,
 ) -> x509.Certificate | None:
@@ -222,10 +229,20 @@ def make_cert(
             datetime.datetime.utcnow()
             + datetime.timedelta(days=data.get("days"))
         )
-        .add_extension(  # FIXME: there MUST be current cert's key
-            x509.SubjectKeyIdentifier.from_public_key(ca_key.public_key()),
+        .add_extension(
+            x509.SubjectKeyIdentifier.from_public_key(key.public_key()),
             critical=False,
-        )  # TODO: ca_key must go to x509.AuthorityKeyIdentifier
+        )
+        .add_extension(
+            x509.AuthorityKeyIdentifier.from_issuer_public_key(
+                ca_key.public_key()
+            ),
+            critical=False,
+        )
+        .add_extension(
+            x509.KeyUsage(**ku),
+            critical=True,
+        )
     )
 
     if issuer_dn:  # If true DN will inherit from issuer (except ENDUSER_DN)
@@ -248,7 +265,6 @@ def make_cert(
                 )
 
         cert = cert.subject_name(x509.Name(x509_names))
-
     else:
         cert = cert.subject_name(csr.subject)
 
@@ -257,79 +273,40 @@ def make_cert(
     else:
         cert = cert.issuer_name(ca_cert.subject)
 
-    if data.get("ca") is True:  # TODO: rewrite this
-        if not data.get("path_length"):
-            data.path_length = 1
-            # TODO: Get from parent and decrease
+    extended_key_usage = []
+    for eku_key, value in eku.items():
+        if value:
+            extended_key_usage.append(
+                getattr(ExtendedKeyUsageOID, eku_key.upper())
+            )
 
-        cert = (
-            cert.add_extension(
-                x509.BasicConstraints(
-                    ca=True, path_length=data.get("path_length")
-                ),
-                critical=True,
-            )
-            .add_extension(
-                x509.KeyUsage(
-                    key_cert_sign=True,
-                    crl_sign=True,
-                    digital_signature=False,
-                    key_encipherment=False,
-                    data_encipherment=False,
-                    key_agreement=False,
-                    content_commitment=False,
-                    encipher_only=False,
-                    decipher_only=False,
-                ),
-                critical=True,
-            )
-            .add_extension(
-                x509.ExtendedKeyUsage(([ExtendedKeyUsageOID.OCSP_SIGNING]))
-            )
+    if extended_key_usage:
+        cert = cert.add_extension(
+            x509.ExtendedKeyUsage(extended_key_usage),
+            critical=True,
         )
 
-    else:  # TODO: rewrite this as well
+    if data.get("ca") is True:
+        path_length = data.get("path_length")
+        if not path_length:
+            for ext in ca_cert.extensions:
+                if ext.value.oid._name == "basicConstraints":
+                    path_length = (
+                        ext.value.path_length
+                        if ext.value.path_length > 0
+                        else 0
+                    )
+
+        cert = cert.add_extension(
+            x509.BasicConstraints(
+                ca=True, path_length=path_length
+            ),
+            critical=True,
+        )
+    else:
         cert = cert.add_extension(
             x509.BasicConstraints(ca=False, path_length=None), critical=True
         )
-
-        if data.get("extendedKeyUsage") == "client_auth":  # client cert
-            cert = cert.add_extension(
-                x509.KeyUsage(
-                    digital_signature=True,
-                    key_encipherment=True,
-                    data_encipherment=True,
-                    key_agreement=True,
-                    content_commitment=False,
-                    key_cert_sign=False,
-                    crl_sign=False,
-                    encipher_only=False,
-                    decipher_only=False,
-                ),
-                critical=True,
-            ).add_extension(
-                x509.ExtendedKeyUsage([ExtendedKeyUsageOID.CLIENT_AUTH]),
-                critical=True,
-            )
-
-        if data.get("extendedKeyUsage") == "server_auth":  # server cert
-            cert = cert.add_extension(
-                x509.KeyUsage(
-                    digital_signature=True,
-                    key_encipherment=True,
-                    key_agreement=True,
-                    data_encipherment=False,
-                    content_commitment=False,
-                    key_cert_sign=False,
-                    crl_sign=False,
-                    encipher_only=False,
-                    decipher_only=False,
-                ),
-                critical=True,
-            ).add_extension(
-                x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]),
-                critical=True,
-            )
 
     if data.get("CRLDistributionPoints"):
         if not isinstance(data.get("CRLDistributionPoints"), list):

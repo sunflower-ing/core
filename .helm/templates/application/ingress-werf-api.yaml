@@ -1,9 +1,9 @@
 {{- if .Values.werf -}}
 {{- $fullName := include "sunflower.fullname" . -}}
 {{- $svcPort := .Values.application.service.port -}}
-{{- if and .Values.application.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
-  {{- if not (hasKey .Values.application.ingress.annotations "kubernetes.io/ingress.class") }}
-  {{- $_ := set .Values.application.ingress.annotations "kubernetes.io/ingress.class" .Values.application.ingress.className}}
+{{- if and .Values.application.api.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.application.api.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.application.api.ingress.annotations "kubernetes.io/ingress.class" .Values.application.api.ingress.className}}
   {{- end }}
 {{- end }}
 {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
@@ -15,24 +15,22 @@ apiVersion: extensions/v1beta1
 {{- end }}
 kind: Ingress
 metadata:
-  name: {{ $fullName }}-application
+  name: {{ $fullName }}-application-api
   labels:
     {{- include "sunflower.labels.application" . | nindent 4 }}
-  {{- with .Values.application.ingress.annotations }}
+  {{- with .Values.application.api.ingress.annotations }}
   annotations:
-    external-dns.kubernetes.io/class: cloudflare
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   ingressClassName: nginx-external
   tls:
     - hosts:
-        - "{{ .Values.envUrl }}"
+        - "api{{ .Values.envUrl }}"
       secretName: fakesecret
   rules:
-    {{- range .Values.application.ingress.hosts }}
-    - host: "{{ $.Values.envUrl }}"
+    {{- range .Values.application.api.ingress.hosts }}
+    - host: "api{{ $.Values.envUrl }}"
       http:
         paths:
           {{- range .paths }}
@@ -51,5 +49,5 @@ spec:
               servicePort: {{ $svcPort }}
               {{- end }}
           {{- end }}
-        {{- end }}
+    {{- end }}
   {{- end }}

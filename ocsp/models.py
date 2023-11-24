@@ -23,6 +23,9 @@ class Source(models.Model):
         verbose_name="Source IP", blank=True, null=True
     )
 
+    class Meta:
+        unique_together = ["name", "host", "addr"]
+
     def __str__(self) -> str:
         return f"{self.name} ({self.addr})"
 

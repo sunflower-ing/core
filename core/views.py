@@ -125,7 +125,7 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
             entity="GROUP",
             object_id=instance.pk,
         )
-        return super().create(request, *args, **kwargs)
+        return Response(SystemGroupSerializer(instance=instance).data)
 
     def update(self, request, *args, **kwargs):
         log(
