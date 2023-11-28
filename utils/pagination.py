@@ -17,6 +17,16 @@ class CustomPageNumberPagination(pagination.PageNumberPagination):
             }
         )
 
+    def paginate_queryset(self, queryset, request, view):
+        if (
+            request.query_params.get("page")
+            and request.query_params.get("page") == "all"
+        ):
+            request.query_params._mutable = True
+            request.query_params.pop("page")
+            self.page_size = queryset.count()
+        return super().paginate_queryset(queryset, request, view)
+
     def get_paginated_response_schema(self, schema):
         return {
             "type": "object",
