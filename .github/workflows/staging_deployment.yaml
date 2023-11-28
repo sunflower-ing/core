@@ -1,4 +1,5 @@
 name: Staging Deployment
+permissions: write-all
 on:
   push:
     branches: [stage]
