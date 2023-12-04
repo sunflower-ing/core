@@ -1,6 +1,7 @@
 from cryptography.x509 import ocsp
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 
@@ -123,6 +124,8 @@ class SourceViewSet(viewsets.ModelViewSet):
     queryset = Source.objects.all()
     serializer_class = SourceSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["name", "host", "addr"]
 
     def create(self, request, *args, **kwargs):
         instance = None
