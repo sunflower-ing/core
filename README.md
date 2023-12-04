@@ -11,7 +11,7 @@ Sunflower API provides the RESTful API to base X.509 possibilities like issuing 
 ## Requirements
 
 - Python 3.8+
-- Runs well in containers & Kubernetes
+- Runs well in containers (Dockerfiles are provided) & Kubernetes ready
 
 
 ## Running in development mode
