@@ -1,4 +1,4 @@
-![python](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
+![python](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue) [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-orange)](https://www.gnu.org/licenses/agpl-3.0) ![status](https://img.shields.io/badge/status-unstable-red)
 
 # Sunflower Core API
 
