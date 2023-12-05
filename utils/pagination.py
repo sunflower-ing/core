@@ -3,6 +3,8 @@ from rest_framework.response import Response
 
 
 class CustomPageNumberPagination(pagination.PageNumberPagination):
+    page_size_query_param = "items"
+
     def get_paginated_response(self, data):
         return Response(
             {
@@ -16,6 +18,16 @@ class CustomPageNumberPagination(pagination.PageNumberPagination):
                 "results": data,
             }
         )
+
+    def paginate_queryset(self, queryset, request, view):
+        if (
+            request.query_params.get("page")
+            and request.query_params.get("page") == "all"
+        ):
+            request.query_params._mutable = True
+            request.query_params.pop("page")
+            self.page_size = queryset.count()
+        return super().paginate_queryset(queryset, request, view)
 
     def get_paginated_response_schema(self, schema):
         return {

@@ -1,5 +1,0 @@
-neoteroi-mkdocs
-mkdocs-material
-mkdocs-pdf-export-plugin
-mkdocs-simple-plugin
-mkdocs-kroki-plugin
