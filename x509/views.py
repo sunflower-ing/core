@@ -166,6 +166,14 @@ class KeyViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
+class CSRFilterSet(rest_framework.FilterSet):
+    created_at = rest_framework.DateFromToRangeFilter()
+
+    class Meta:
+        model = CSR
+        fields = ["name", "signed", "ca", "path_length", "created_at"]
+
+
 class CSRViewSet(viewsets.ModelViewSet):
     queryset = CSR.objects.all()
     serializer_class = CSRSerializer
@@ -174,7 +182,7 @@ class CSRViewSet(viewsets.ModelViewSet):
         rest_framework.DjangoFilterBackend,
         filters.SearchFilter,
     ]
-    filterset_fields = ["name", "signed", "ca", "path_length"]
+    filterset_class = CSRFilterSet
     search_fields = ["name"]
 
     def create(self, request, *args, **kwargs):
