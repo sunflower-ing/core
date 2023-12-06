@@ -291,6 +291,24 @@ class CSRViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
+class CertificateFilterSet(rest_framework.FilterSet):
+    created_at = rest_framework.DateFromToRangeFilter()
+    revoked_at = rest_framework.DateFromToRangeFilter()
+
+    class Meta:
+        model = Certificate
+        fields = [
+            "sn",
+            "parent",
+            "imported",
+            "revoked",
+            "revocation_reason",
+            "fingerprint",
+            "created_at",
+            "revoked_at",
+        ]
+
+
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerialiser
@@ -299,15 +317,8 @@ class CertificateViewSet(viewsets.ModelViewSet):
         rest_framework.DjangoFilterBackend,
         filters.SearchFilter,
     ]
-    filterset_fields = [
-        "sn",
-        "parent",
-        "imported",
-        "revoked",
-        "revocation_reason",
-        "fingerprint",
-    ]
-    search_fields = ["csr__name"]
+    filterset_class = CertificateFilterSet
+    search_fields = ["csr__name", "fingerprint"]
 
     http_method_names = ["get", "post", "put"]
 
