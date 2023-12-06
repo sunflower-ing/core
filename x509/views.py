@@ -2,7 +2,7 @@ import uuid
 
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import (
@@ -39,13 +39,24 @@ CTYPE = {
 }
 
 
+class KeyFilterSet(rest_framework.FilterSet):
+    created_at = rest_framework.DateFromToRangeFilter()
+
+    class Meta:
+        model = Key
+        fields = ["algo", "length", "used", "fingerprint", "created_at"]
+
+
 class KeyViewSet(viewsets.ModelViewSet):
     queryset = Key.objects.all()
     serializer_class = KeySerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["algo", "length", "used", "fingerprint"]
-    search_fields = ["name"]
+    filter_backends = [
+        rest_framework.DjangoFilterBackend,
+        filters.SearchFilter,
+    ]
+    filterset_class = KeyFilterSet
+    search_fields = ["name", "fingerprint"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -159,7 +170,10 @@ class CSRViewSet(viewsets.ModelViewSet):
     queryset = CSR.objects.all()
     serializer_class = CSRSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [
+        rest_framework.DjangoFilterBackend,
+        filters.SearchFilter,
+    ]
     filterset_fields = ["name", "signed", "ca", "path_length"]
     search_fields = ["name"]
 
@@ -273,7 +287,10 @@ class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerialiser
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [
+        rest_framework.DjangoFilterBackend,
+        filters.SearchFilter,
+    ]
     filterset_fields = [
         "sn",
         "parent",
@@ -288,7 +305,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(
-            data=request.data, context={'request': request}
+            data=request.data, context={"request": request}
         )
         if serializer.is_valid():
             instance = serializer.save()
