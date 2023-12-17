@@ -4,7 +4,3 @@ project: sunflower
 image: application
 dockerfile: Dockerfile
 context: .
----
-image: docs
-dockerfile: docs/Dockerfile
-context: .

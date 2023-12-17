@@ -9,14 +9,3 @@ data:
   {{ $conf_key  }}: {{ $conf_value | quote }}
 {{- end}}
   DB_HOST: {{ .Release.Name }}-postgresql
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "sunflower.fullname" . }}-docs
-  labels:
-    {{- include "sunflower.labels.docs" . | nindent 4 }}
-data:
-{{- range $conf_key,$conf_value := .Values.docs.configs }}
-  {{ $conf_key  }}: {{ $conf_value | quote }}
-{{- end}}
