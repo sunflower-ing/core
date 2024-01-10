@@ -99,6 +99,6 @@ urlpatterns = [
         name="redoc",
     ),
     # Non versioned views
-    path("crl/<str:ca_slug>.<str:format>", crl_view, name="crl"),
+    path("crl/<int:ca_sn>.<str:format>", crl_view, name="crl"),
     path("ocsp/", ocsp_view, name="ocsp"),
 ]

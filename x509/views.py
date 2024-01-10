@@ -1,8 +1,8 @@
 import uuid
 
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
-from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend
+from django.http import HttpResponse, HttpResponseNotFound
+from django_filters import rest_framework
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import (
@@ -39,13 +39,24 @@ CTYPE = {
 }
 
 
+class KeyFilterSet(rest_framework.FilterSet):
+    created_at = rest_framework.DateFromToRangeFilter()
+
+    class Meta:
+        model = Key
+        fields = ["algo", "length", "used", "fingerprint", "created_at"]
+
+
 class KeyViewSet(viewsets.ModelViewSet):
     queryset = Key.objects.all()
     serializer_class = KeySerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["algo", "length", "used", "fingerprint"]
-    search_fields = ["name"]
+    filter_backends = [
+        rest_framework.DjangoFilterBackend,
+        filters.SearchFilter,
+    ]
+    filterset_class = KeyFilterSet
+    search_fields = ["name", "fingerprint"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -155,12 +166,23 @@ class KeyViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
+class CSRFilterSet(rest_framework.FilterSet):
+    created_at = rest_framework.DateFromToRangeFilter()
+
+    class Meta:
+        model = CSR
+        fields = ["name", "signed", "ca", "path_length", "created_at"]
+
+
 class CSRViewSet(viewsets.ModelViewSet):
     queryset = CSR.objects.all()
     serializer_class = CSRSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["name", "signed", "ca", "path_length"]
+    filter_backends = [
+        rest_framework.DjangoFilterBackend,
+        filters.SearchFilter,
+    ]
+    filterset_class = CSRFilterSet
     search_fields = ["name"]
 
     def create(self, request, *args, **kwargs):
@@ -269,26 +291,40 @@ class CSRViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
+class CertificateFilterSet(rest_framework.FilterSet):
+    created_at = rest_framework.DateFromToRangeFilter()
+    revoked_at = rest_framework.DateFromToRangeFilter()
+
+    class Meta:
+        model = Certificate
+        fields = [
+            "sn",
+            "parent",
+            "imported",
+            "revoked",
+            "revocation_reason",
+            "fingerprint",
+            "created_at",
+            "revoked_at",
+        ]
+
+
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerialiser
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = [
-        "sn",
-        "parent",
-        "imported",
-        "revoked",
-        "revocation_reason",
-        "fingerprint",
+    filter_backends = [
+        rest_framework.DjangoFilterBackend,
+        filters.SearchFilter,
     ]
-    search_fields = ["csr__name"]
+    filterset_class = CertificateFilterSet
+    search_fields = ["csr__name", "fingerprint"]
 
     http_method_names = ["get", "post", "put"]
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(
-            data=request.data, context={'request': request}
+            data=request.data, context={"request": request}
         )
         if serializer.is_valid():
             instance = serializer.save()
@@ -401,8 +437,16 @@ class CertificateViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
-def crl_view(request, ca_slug, format: str = "crl"):
-    crl = CRL.objects.filter(ca__csr__slug=ca_slug).first()
+def crl_view(request, ca_sn, format: str = "crl"):
+    cert = Certificate.objects.get(sn=ca_sn)
+    if not cert.is_ca:
+        return HttpResponseNotFound("CA not found")
+
+    crl = CRL.objects.filter(ca=cert).first()
+    if not crl:  # Sad but true
+        crl = CRL(ca=cert)
+        crl.save()
+
     if format == "crt":
         return HttpResponse(crl.as_der())
     else:
@@ -499,6 +543,10 @@ class CertificateImportView(generics.GenericAPIView):
                 imported=True,
             )
             cert.save()
+
+            if cert.is_ca:
+                crl = CRL(ca=cert)
+                crl.save()
 
             return Response(CertificateSerialiser(instance=cert).data)
 

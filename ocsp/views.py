@@ -1,7 +1,7 @@
 from cryptography.x509 import ocsp
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 
@@ -124,7 +124,7 @@ class SourceViewSet(viewsets.ModelViewSet):
     queryset = Source.objects.all()
     serializer_class = SourceSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [rest_framework.DjangoFilterBackend]
     filterset_fields = ["name", "host", "addr"]
 
     def create(self, request, *args, **kwargs):
@@ -185,10 +185,29 @@ class SourceViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
+class RequestLogFilterSet(rest_framework.FilterSet):
+    date = rest_framework.DateFromToRangeFilter()
+    cert = rest_framework.ModelChoiceFilter(
+        queryset=Certificate.objects.all(), null_label="null"
+    )
+
+    class Meta:
+        model = RequestLog
+        fields = [
+            "date",
+            "cert",
+            "host",
+            "addr",
+            "result",
+        ]
+
+
 class RequestLogViewSet(viewsets.ModelViewSet):
     queryset = RequestLog.objects.all()
     serializer_class = RequestLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [rest_framework.DjangoFilterBackend]
+    filterset_class = RequestLogFilterSet
 
     http_method_names = ["get"]
 
