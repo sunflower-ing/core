@@ -4,7 +4,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from django.conf import settings
 from django.db import models
-from django.utils.text import slugify
 
 from utils.crypto import (
     REVOCATION_REASONS,
@@ -115,9 +114,6 @@ class CSR(models.Model):
     key = models.ForeignKey(to=Key, on_delete=models.RESTRICT)
 
     name = models.CharField(verbose_name="Internal name", max_length=255)
-    slug = models.SlugField(
-        verbose_name="Slug", max_length=255, unique=True, blank=True
-    )
 
     body = models.TextField(verbose_name="CSR", blank=True)
     params = models.JSONField(verbose_name="Certificate params", blank=True)
@@ -142,8 +138,6 @@ class CSR(models.Model):
         return self.name
 
     def save(self, *args, **kwargs) -> None:
-        self.slug = slugify(self.name, allow_unicode=True)
-
         data: dict = self.params
         data.update({"ca": self.ca, "path_length": self.path_length})
 
@@ -309,7 +303,7 @@ class CRL(models.Model):
     def save(self, *args, **kwargs) -> None:
         if self._state.adding is True:
             crl_object = make_crl(
-                self.ca.as_object(), self.ca.csr.key.private_as_object()
+                self.ca.as_object(), self.ca.key.private_as_object()
             )
 
         else:
@@ -323,7 +317,7 @@ class CRL(models.Model):
 
             crl_object = make_crl(
                 self.ca.as_object(),
-                self.ca.csr.key.private_as_object(),
+                self.ca.key.private_as_object(),
                 revoked_certs,
             )
 

@@ -1,7 +1,7 @@
 import uuid
 
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django_filters import rest_framework
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -437,8 +437,16 @@ class CertificateViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
-def crl_view(request, ca_slug, format: str = "crl"):
-    crl = CRL.objects.filter(ca__csr__slug=ca_slug).first()
+def crl_view(request, ca_sn, format: str = "crl"):
+    cert = Certificate.objects.get(sn=ca_sn)
+    if not cert.is_ca:
+        return HttpResponseNotFound("CA not found")
+
+    crl = CRL.objects.filter(ca=cert).first()
+    if not crl:  # Sad but true
+        crl = CRL(ca=cert)
+        crl.save()
+
     if format == "crt":
         return HttpResponse(crl.as_der())
     else:
@@ -535,6 +543,10 @@ class CertificateImportView(generics.GenericAPIView):
                 imported=True,
             )
             cert.save()
+
+            if cert.is_ca:
+                crl = CRL(ca=cert)
+                crl.save()
 
             return Response(CertificateSerialiser(instance=cert).data)
 
