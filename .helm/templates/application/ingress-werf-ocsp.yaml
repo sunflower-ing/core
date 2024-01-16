@@ -27,7 +27,7 @@ spec:
   tls:
     - hosts:
         - "ocsp{{ .Values.envUrl }}"
-      secretName: fakesecret
+      secretName: {{ .Values.application.ocsp.ingress.tlsSecretName }}
   rules:
     {{- range .Values.application.ocsp.ingress.hosts }}
     - host: "ocsp{{ $.Values.envUrl }}"
