@@ -27,7 +27,7 @@ spec:
   tls:
     - hosts:
         - "api{{ .Values.envUrl }}"
-      secretName: fakesecret
+      secretName: {{ .Values.application.api.ingress.tlsSecretName }}
   rules:
     {{- range .Values.application.api.ingress.hosts }}
     - host: "api{{ $.Values.envUrl }}"

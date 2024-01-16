@@ -83,7 +83,7 @@ application:
           paths:
             - path: /(.*)
               pathType: ImplementationSpecific
-      tls: []
+      tlsSecretName: fakesecret
       #  - secretName: chart-example-tls
       #    hosts:
       #      - chart-example.local
@@ -100,7 +100,7 @@ application:
           paths:
             - path: /
               pathType: ImplementationSpecific
-      tls: []
+      tlsSecretName: fakesecret
       #  - secretName: chart-example-tls
       #    hosts:
       #      - chart-example.local
@@ -118,7 +118,7 @@ application:
           paths:
             - path: /(.*)
               pathType: ImplementationSpecific
-      tls: []
+      tlsSecretName: fakesecret
       #  - secretName: chart-example-tls
       #    hosts:
       #      - chart-example.local
