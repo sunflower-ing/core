@@ -1,3 +1,4 @@
+envUrl: ".sbereducation.ru"
 nodeSelector:
   node-role.kubernetes.io/dmz: ""
 tolerations:
@@ -8,3 +9,15 @@ tolerations:
 application:
   configs:
     FORCE_SCRIPT_NAME: "/"
+
+  ocsp:
+    ingress:
+      tlsSecretName: sbereducation.ru
+
+  api:
+    ingress:
+      tlsSecretName: sbereducation.ru
+
+  crl:
+    ingress:
+      tlsSecretName: sbereducation.ru

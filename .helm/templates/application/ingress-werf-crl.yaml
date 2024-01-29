@@ -27,7 +27,7 @@ spec:
   tls:
     - hosts:
         - "crl{{ .Values.envUrl }}"
-      secretName: fakesecret
+      secretName: {{ .Values.application.crl.ingress.tlsSecretName }}
   rules:
     {{- range .Values.application.crl.ingress.hosts }}
     - host: "crl{{ $.Values.envUrl }}"
