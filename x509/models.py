@@ -332,7 +332,11 @@ class CRL(models.Model):
         return crl_from_pem(self.body.encode())
 
     def as_pem(self) -> str:
+        if self.next_update >= datetime.datetime.now():
+            self.save()
         return self.body
 
     def as_der(self) -> bytes:
+        if self.next_update >= datetime.datetime.now():
+            self.save()
         return crl_to_der(self.as_object())
