@@ -1,9 +1,8 @@
-import datetime
-
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from django.conf import settings
 from django.db import models
+from django.utils.timezone import datetime
 
 from utils.crypto import (
     REVOCATION_REASONS,
