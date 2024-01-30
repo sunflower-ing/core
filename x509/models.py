@@ -2,7 +2,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from django.conf import settings
 from django.db import models
-from django.utils.timezone import datetime
+from django.utils import timezone
 
 from utils.crypto import (
     REVOCATION_REASONS,
@@ -245,7 +245,7 @@ class Certificate(models.Model):
 
     def revoke(self, reason: str = None) -> None:
         self.revoked = True
-        self.revoked_at = datetime.datetime.now()
+        self.revoked_at = timezone.now()
         self.revocation_reason = (
             reason if reason else REVOCATION_REASONS["unspecified"]
         )
@@ -321,7 +321,7 @@ class CRL(models.Model):
             )
 
         self.body = crl_to_pem(crl_object).decode()
-        self.next_update = datetime.datetime.now() + datetime.timedelta(
+        self.next_update = timezone.now() + timezone.timedelta(
             1, 0, 0  # TODO: move next_update delta to config
         )
 
@@ -331,11 +331,11 @@ class CRL(models.Model):
         return crl_from_pem(self.body.encode())
 
     def as_pem(self) -> str:
-        if self.next_update >= datetime.datetime.now():
+        if self.next_update >= timezone.now():
             self.save()
         return self.body
 
     def as_der(self) -> bytes:
-        if self.next_update >= datetime.datetime.now():
+        if self.next_update >= timezone.now():
             self.save()
         return crl_to_der(self.as_object())
