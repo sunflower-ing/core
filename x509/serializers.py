@@ -105,7 +105,6 @@ class CSRSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "subject",
-            "slug",
             "key",
             "created_at",
             "signed",
