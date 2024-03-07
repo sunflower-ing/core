@@ -6,6 +6,7 @@ class Modules(models.TextChoices):
     SYSTEM = "system", "System"
     X509 = "x509", "X509"
     OCSP = "ocsp", "OCSP"
+    SUBJECTS = "subjects", "Subjects"
 
 
 class Actions(models.TextChoices):
@@ -30,9 +31,7 @@ class LogEntry(models.Model):
     object_id = models.IntegerField(
         verbose_name="Description", blank=True, null=True
     )
-    date = models.DateTimeField(
-        verbose_name="Created", auto_now_add=True
-    )
+    date = models.DateTimeField(verbose_name="Created", auto_now_add=True)
 
     class Meta:
         ordering = ["-date"]

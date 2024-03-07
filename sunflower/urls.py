@@ -30,6 +30,7 @@ from x509.views import (
     KeyViewSet,
     crl_view,
 )
+from subjects.views import UserSubjectViewSet, ServiceSubjectViewSet
 
 router = routers.DefaultRouter()
 router.register(r"x509/keys", KeyViewSet)
@@ -41,6 +42,8 @@ router.register(r"system/users", SystemUserViewSet)
 router.register(r"system/groups", SystemGroupViewSet)
 router.register(r"system/permissions", SystemPermissionViewSet)
 router.register(r"system/logs", SystemLogEntryViewSet)
+router.register(r"subject/users", UserSubjectViewSet)
+router.register(r"subject/services", ServiceSubjectViewSet)
 
 
 urlpatterns = [
@@ -50,19 +53,21 @@ urlpatterns = [
     path("api-auth/", include("rest_framework.urls")),
     # API views
     path(
-        "api/v1/token/",
+        "api/v1/auth/token/",
         TokenObtainPairView.as_view(),
         name="token_obtain_pair",
     ),
     path(
-        "api/v1/token/refresh/",
+        "api/v1/auth/token-refresh/",
         TokenRefreshView.as_view(),
         name="token_refresh",
     ),
     path(
-        "api/v1/token/verify/", TokenVerifyView.as_view(), name="token_verify"
+        "api/v1/auth/token-verify/",
+        TokenVerifyView.as_view(),
+        name="token_verify",
     ),
-    path("api/v1/me/", UserView.as_view(), name="user_profile"),
+    path("api/v1/auth/me/", UserView.as_view(), name="user_profile"),
     path("api/v1/", include(router.urls)),
     path(
         "api/v1/import/key/", KeyImportView.as_view(), name="key_import_view"
