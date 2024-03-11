@@ -10,6 +10,6 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
   - name: redis
-    version: 18.17.0
+    version: 17.15.0
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
