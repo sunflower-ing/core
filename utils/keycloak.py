@@ -5,7 +5,7 @@ KC_SETTINGS = settings.SUBJECT_SOURCES_SETTINGS.get("keycloak")
 BASE_URL = KC_SETTINGS.get("BASE_URL")
 if BASE_URL:
     BASE_URL = BASE_URL.rstrip("/")
-BASE_URL_ADMIN = BASE_URL.replace("/auth/realms/", "/auth/admin/realms/")
+    BASE_URL_ADMIN = BASE_URL.replace("/auth/realms/", "/auth/admin/realms/")
 
 
 def kc_connect() -> requests.Session:
