@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sunflower.fullname" . }}-celery-worker
+  labels:
+    {{- include "sunflower.labels.celery" . | nindent 4 }}
+    celery: worker
+spec:
+  {{- if not .Values.celery.autoscaling.enabled }}
+  replicas: {{ .Values.celery.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "sunflower.selectorLabels.celery" . | nindent 6 }}
+      celery: worker
+  template:
+    metadata:
+      {{- with .Values.celery.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sunflower.selectorLabels.celery" . | nindent 8 }}
+        celery: worker
+    spec:
+      {{- with .Values.celery.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sunflower.serviceAccountName.celery" . }}
+      securityContext:
+        {{- toYaml .Values.celery.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          envFrom:
+          - configMapRef:
+              name: {{ include "sunflower.fullname" . }}-celery
+          securityContext:
+            {{- toYaml .Values.celery.securityContext | nindent 12 }}
+          {{- if .Values.werf }}
+          image: "{{ index .Values.werf.image "celery_worker"}}"
+          {{- else }}
+          image: "{{ .Values.celery.image.repository }}:{{ .Values.celery.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.celery.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.celery.resources | nindent 12 }}
+      {{- with .Values.celery.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celery.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.celery.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
