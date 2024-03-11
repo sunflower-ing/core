@@ -28,7 +28,7 @@ class Subject(models.Model):
     source_id = models.CharField(verbose_name="Remote (source) ID")
     enabled = models.BooleanField(verbose_name="Enabled", default=True)
     data = models.JSONField(
-        verbose_name="Subject metadata", blank=True, default={}
+        verbose_name="Subject metadata", blank=True, default=dict
     )
     created_at = models.DateTimeField(
         verbose_name="Created at", auto_now_add=True

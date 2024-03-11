@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 
 KC_SETTINGS = settings.SUBJECT_SOURCES_SETTINGS.get("keycloak")
-BASE_URL = KC_SETTINGS.get("BASE_URL").rstrip("/")
+BASE_URL = KC_SETTINGS.get("BASE_URL", "").rstrip("/")
 BASE_URL_ADMIN = BASE_URL.replace("/auth/realms/", "/auth/admin/realms/")
 
 
