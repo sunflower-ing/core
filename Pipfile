@@ -16,6 +16,7 @@ djangorestframework-simplejwt = {extras = ["crypto"], version = "*"}
 celery = "*"
 redis = "*"
 drf-spectacular = "*"
+requests = "*"
 
 [dev-packages]
 pytest = "*"
