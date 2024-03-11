@@ -4,3 +4,11 @@ project: sunflower
 image: application
 dockerfile: Dockerfile
 context: .
+---
+image: celery_beat
+dockerfile: Dockerfile.celery_beat
+context: .
+---
+image: celery_worker
+dockerfile: Dockerfile.celery_worker
+context: .

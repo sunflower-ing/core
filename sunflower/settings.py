@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
+
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "x509.apps.X509Config",
     "ocsp.apps.OCSPConfig",
+    "subjects.apps.SubjectsConfig",
     # 'django.contrib.admin',
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -171,7 +173,7 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "Sunflower API",
     "DESCRIPTION": "API schema for Sunflower PKI ecosystem",
-    "VERSION": "1.0.0",
+    "VERSION": "1.0.1",
     "SCHEMA_PATH_PREFIX": "/api/v[0-9]",
     # 'COMPONENT_SPLIT_REQUEST': True,
     "SERVE_INCLUDE_SCHEMA": False,
@@ -187,3 +189,12 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+
+SUBJECT_SOURCES_SETTINGS = {
+    "keycloak": {
+        "ENABLED": True,
+        "CLIENT_ID": os.environ.get("KEYCLOAK_CLIENT_ID"),
+        "CLIENT_SECRET": os.environ.get("KEYCLOAK_CLIENT_SECRET"),
+        "BASE_URL": os.environ.get("KEYCLOAK_BASE_URL"),
+    }
+}
