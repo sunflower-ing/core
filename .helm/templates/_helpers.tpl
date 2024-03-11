@@ -92,3 +92,35 @@ Create the name of the service account to use
 {{- default "default" .Values.docs.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Common labels
+*/}}
+{{- define "sunflower.labels.celery" -}}
+helm.sh/chart: {{ include "sunflower.chart" . }}
+{{ include "sunflower.selectorLabels.celery" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "sunflower.selectorLabels.celery" -}}
+app.kubernetes.io/name: {{ include "sunflower.name" . }}-celery
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "sunflower.serviceAccountName.celery" -}}
+{{- if .Values.celery.serviceAccount.create }}
+{{- default (include "sunflower.fullname" .) .Values.celery.serviceAccount.name }}-celery
+{{- else }}
+{{- default "default" .Values.celery.serviceAccount.name }}
+{{- end }}
+{{- end }}
