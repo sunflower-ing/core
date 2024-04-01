@@ -155,7 +155,8 @@ application:
 
 celery:
 
-  configs: {}
+  configs:
+    DB_ENGINE: django.db.backends.postgresql
 
   replicaCount: 1
 
