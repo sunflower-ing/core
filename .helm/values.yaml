@@ -157,6 +157,8 @@ celery:
 
   configs:
     DB_ENGINE: django.db.backends.postgresql
+    DB_NAME: "sunflower-db"
+    DB_PORT: 5432
 
   replicaCount: 1
 
