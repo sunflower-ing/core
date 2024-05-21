@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://demo.sunflower.ing
+      url: https://api.sunflower.ing
     steps:
 
       - name: Checkout code
