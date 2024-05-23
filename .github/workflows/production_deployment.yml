@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://api.sunflower.ing
+      url: https://api-demo.sunflower.ing
     steps:
 
       - name: Checkout code
@@ -25,4 +25,4 @@ jobs:
           kube-config-base64-data: ${{ secrets.KUBE_CONFIG_BASE64_DATA }}
         env:
           WERF_SECRET_KEY: ${{ secrets.WERF_SECRET_KEY }}
-          WERF_SET_ENV_URL: "envUrl=.sunflower.ing"
+          WERF_SET_ENV_URL: "envUrl=-demo.sunflower.ing"
