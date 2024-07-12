@@ -32,6 +32,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "insecure-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 TEMPLATE_DEBUG = DEBUG
 
+VERSION = "0.1.5"
+
 FORCE_SCRIPT_NAME = os.environ.get("FORCE_SCRIPT_NAME", "/")
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ["*"])
