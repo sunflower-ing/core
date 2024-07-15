@@ -1,6 +1,7 @@
+from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
 from django.http import JsonResponse
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.response import Response
 
 from .models import Actions, LogEntry, Modules, log
@@ -13,21 +14,23 @@ from .serializers import (
 
 
 def index(request):
-    return JsonResponse({"i'm": "ok"})
+    return JsonResponse({"status": "ok", "version": settings.VERSION})
 
 
 class UserView(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = SystemUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         return Response(SystemUserSerializer(instance=request.user).data)
 
 
 class SystemUserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by("-id")
+    queryset = User.objects.all()
     serializer_class = SystemUserSerializer
     permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["id", "username"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -105,9 +108,11 @@ class SystemUserViewSet(viewsets.ModelViewSet):
 
 
 class SystemGroupViewSet(viewsets.ModelViewSet):
-    queryset = Group.objects.all().order_by("-id")
+    queryset = Group.objects.all()
     serializer_class = SystemGroupSerializer
     permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["id", "name"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -168,9 +173,11 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
 
 
 class SystemPermissionViewSet(viewsets.ModelViewSet):
-    queryset = Permission.objects.all().order_by("-id")
+    queryset = Permission.objects.all()
     serializer_class = SystemPermissionSerializer
     permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["id", "name"]
 
     http_method_names = ["get"]
 
@@ -188,6 +195,8 @@ class SystemLogEntryViewSet(viewsets.ModelViewSet):
     queryset = LogEntry.objects.all()
     serializer_class = SystemLogEntrySerializer
     permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["date", "user", "module", "action"]
 
     http_method_names = ["get"]
 

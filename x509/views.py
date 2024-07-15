@@ -54,9 +54,11 @@ class KeyViewSet(viewsets.ModelViewSet):
     filter_backends = [
         rest_framework.DjangoFilterBackend,
         filters.SearchFilter,
+        filters.OrderingFilter,
     ]
     filterset_class = KeyFilterSet
     search_fields = ["name", "fingerprint"]
+    ordering_fields = ["created_at", "algo", "used"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -181,9 +183,11 @@ class CSRViewSet(viewsets.ModelViewSet):
     filter_backends = [
         rest_framework.DjangoFilterBackend,
         filters.SearchFilter,
+        filters.OrderingFilter,
     ]
     filterset_class = CSRFilterSet
     search_fields = ["name"]
+    ordering_fields = ["created_at", "name", "signed", "ca"]
 
     def create(self, request, *args, **kwargs):
         instance = None
@@ -316,9 +320,11 @@ class CertificateViewSet(viewsets.ModelViewSet):
     filter_backends = [
         rest_framework.DjangoFilterBackend,
         filters.SearchFilter,
+        filters.OrderingFilter,
     ]
     filterset_class = CertificateFilterSet
     search_fields = ["csr__name", "fingerprint"]
+    ordering_fields = ["created_at", "revoked_at", "imported", "revoked"]
 
     http_method_names = ["get", "post", "put"]
 
@@ -594,9 +600,9 @@ class KeyExportView(generics.RetrieveAPIView):
                     data = key_to_der(key.private_as_object(), private=True)
 
                 response = HttpResponse(data, content_type=CTYPE[key_format])
-                response[
-                    "Content-Disposition"
-                ] = f"attachment; filename='{key.name}'"
+                response["Content-Disposition"] = (
+                    f"attachment; filename='{key.name}'"
+                )
 
                 return response
             else:
@@ -606,9 +612,9 @@ class KeyExportView(generics.RetrieveAPIView):
                     data = key_to_der(key.public_as_object())
 
                 response = HttpResponse(data, content_type=CTYPE[key_format])
-                response[
-                    "Content-Disposition"
-                ] = f"attachment; filename='{key.name}'"
+                response["Content-Disposition"] = (
+                    f"attachment; filename='{key.name}'"
+                )
 
                 return response
 
@@ -646,15 +652,15 @@ class CertificateExportView(generics.GenericAPIView):
             else:
                 response = HttpResponse(
                     cert_to_der(cert.as_object()),
-                    content_type=CTYPE["der_ca"]
-                    if cert.is_ca
-                    else CTYPE["der_enduser"],
+                    content_type=(
+                        CTYPE["der_ca"] if cert.is_ca else CTYPE["der_enduser"]
+                    ),
                 )
             # TODO: Add PKCS12
 
-            response[
-                "Content-Disposition"
-            ] = f"attachment; filename='{cert.cn}'"
+            response["Content-Disposition"] = (
+                f"attachment; filename='{cert.cn}'"
+            )
 
             return response
 

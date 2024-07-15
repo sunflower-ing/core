@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User, Permission, Group
+from django.contrib.auth.models import Group, Permission, User
 from rest_framework import serializers
 
 from .models import LogEntry
@@ -31,6 +31,8 @@ class SystemPermissionSerializer(serializers.ModelSerializer):
 
 
 class SystemGroupSerializer(serializers.ModelSerializer):
+    permissions = SystemPermissionSerializer(many=True)
+
     class Meta:
         model = Group
         fields = ("id", "name", "permissions")
