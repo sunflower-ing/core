@@ -19,6 +19,18 @@ class SystemGroupSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "permissions")
 
 
+class SystemUserSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+        )
+
+
 class SystemUserSerializer(serializers.ModelSerializer):
     groups = SystemGroupSerializer(many=True)
 
@@ -73,7 +85,7 @@ class SystemUserUpdateSerializer(SystemUserSerializer):
 
 
 class SystemLogEntrySerializer(serializers.ModelSerializer):
-    user = SystemUserSerializer()
+    user = SystemUserSimpleSerializer()
 
     class Meta:
         model = LogEntry
