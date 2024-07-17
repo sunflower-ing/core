@@ -9,7 +9,9 @@ from .serializers import (
     SystemGroupSerializer,
     SystemLogEntrySerializer,
     SystemPermissionSerializer,
+    SystemUserCreateSerializer,
     SystemUserSerializer,
+    SystemUserUpdateSerializer,
 )
 
 
@@ -27,10 +29,21 @@ class UserView(generics.GenericAPIView):
 
 class SystemUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = SystemUserSerializer
+    # serializer_class = SystemUserSerializer
     permission_classes = [permissions.IsAdminUser]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["id", "username"]
+
+    serializer_classes = {
+        "create": SystemUserCreateSerializer,
+        "update": SystemUserUpdateSerializer,
+    }
+    default_serializer_class = SystemUserSerializer
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.default_serializer_class
+        )
 
     def create(self, request, *args, **kwargs):
         instance = None
