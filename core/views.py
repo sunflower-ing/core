@@ -49,7 +49,7 @@ class SystemUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         instance = None
-        serializer = self.serializer_class(
+        serializer = self.get_serializer_class()(
             data=request.data, context={"request": request}
         )
         if serializer.is_valid(raise_exception=True):
@@ -124,7 +124,7 @@ class SystemUserViewSet(viewsets.ModelViewSet):
 
 class SystemGroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
-    serializer_class = SystemGroupSerializer
+    # serializer_class = SystemGroupSerializer
     permission_classes = [permissions.IsAdminUser]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["id", "name"]
@@ -142,7 +142,7 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         instance = None
-        serializer = self.serializer_class(
+        serializer = self.get_serializer_class()(
             data=request.data, context={"request": request}
         )
         if serializer.is_valid(raise_exception=True):
