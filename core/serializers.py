@@ -19,6 +19,16 @@ class SystemGroupSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "permissions")
 
 
+class SystemGroupCreateSerializer(SystemGroupSerializer):
+    permissions = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Permission.objects.all()
+    )
+
+
+class SystemGroupUpdateSerializer(SystemGroupCreateSerializer):
+    pass
+
+
 class SystemUserSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -66,7 +76,6 @@ class SystemUserUpdateSerializer(SystemUserSerializer):
     class Meta:
         model = User
         fields = (
-            "id",
             "username",
             "password",
             "email",
@@ -75,7 +84,6 @@ class SystemUserUpdateSerializer(SystemUserSerializer):
             "is_active",
             "is_staff",
             "is_superuser",
-            "last_login",
             "groups",
         )
         extra_kwargs = {

@@ -6,7 +6,9 @@ from rest_framework.response import Response
 
 from .models import Actions, LogEntry, Modules, log
 from .serializers import (
+    SystemGroupCreateSerializer,
     SystemGroupSerializer,
+    SystemGroupUpdateSerializer,
     SystemLogEntrySerializer,
     SystemPermissionSerializer,
     SystemUserCreateSerializer,
@@ -126,6 +128,17 @@ class SystemGroupViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["id", "name"]
+
+    serializer_classes = {
+        "create": SystemGroupCreateSerializer,
+        "update": SystemGroupUpdateSerializer,
+    }
+    default_serializer_class = SystemGroupSerializer
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.default_serializer_class
+        )
 
     def create(self, request, *args, **kwargs):
         instance = None
