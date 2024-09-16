@@ -6,10 +6,14 @@ from rest_framework.response import Response
 
 from .models import Actions, LogEntry, Modules, log
 from .serializers import (
+    SystemGroupCreateSerializer,
     SystemGroupSerializer,
+    SystemGroupUpdateSerializer,
     SystemLogEntrySerializer,
     SystemPermissionSerializer,
+    SystemUserCreateSerializer,
     SystemUserSerializer,
+    SystemUserUpdateSerializer,
 )
 
 
@@ -27,14 +31,25 @@ class UserView(generics.GenericAPIView):
 
 class SystemUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = SystemUserSerializer
+    # serializer_class = SystemUserSerializer
     permission_classes = [permissions.IsAdminUser]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["id", "username"]
 
+    serializer_classes = {
+        "create": SystemUserCreateSerializer,
+        "update": SystemUserUpdateSerializer,
+    }
+    default_serializer_class = SystemUserSerializer
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.default_serializer_class
+        )
+
     def create(self, request, *args, **kwargs):
         instance = None
-        serializer = self.serializer_class(
+        serializer = self.get_serializer_class()(
             data=request.data, context={"request": request}
         )
         if serializer.is_valid(raise_exception=True):
@@ -109,14 +124,25 @@ class SystemUserViewSet(viewsets.ModelViewSet):
 
 class SystemGroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
-    serializer_class = SystemGroupSerializer
+    # serializer_class = SystemGroupSerializer
     permission_classes = [permissions.IsAdminUser]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["id", "name"]
 
+    serializer_classes = {
+        "create": SystemGroupCreateSerializer,
+        "update": SystemGroupUpdateSerializer,
+    }
+    default_serializer_class = SystemGroupSerializer
+
+    def get_serializer_class(self):
+        return self.serializer_classes.get(
+            self.action, self.default_serializer_class
+        )
+
     def create(self, request, *args, **kwargs):
         instance = None
-        serializer = self.serializer_class(
+        serializer = self.get_serializer_class()(
             data=request.data, context={"request": request}
         )
         if serializer.is_valid(raise_exception=True):

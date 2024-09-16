@@ -20,6 +20,8 @@ from core.views import (
     index,
 )
 from ocsp.views import RequestLogViewSet, SourceViewSet, ocsp_view
+from ovpn.views import OVPNTemplateViewSet
+from subjects.views import ServiceSubjectViewSet, UserSubjectViewSet
 from x509.views import (
     CertificateExportView,
     CertificateImportView,
@@ -30,7 +32,6 @@ from x509.views import (
     KeyViewSet,
     crl_view,
 )
-from subjects.views import UserSubjectViewSet, ServiceSubjectViewSet
 
 router = routers.DefaultRouter()
 router.register(r"x509/keys", KeyViewSet)
@@ -44,6 +45,7 @@ router.register(r"system/permissions", SystemPermissionViewSet)
 router.register(r"system/logs", SystemLogEntryViewSet)
 router.register(r"subject/users", UserSubjectViewSet)
 router.register(r"subject/services", ServiceSubjectViewSet)
+router.register(r"ovpn/templates", OVPNTemplateViewSet)
 
 
 urlpatterns = [

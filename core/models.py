@@ -7,6 +7,7 @@ class Modules(models.TextChoices):
     X509 = "x509", "X509"
     OCSP = "ocsp", "OCSP"
     SUBJECTS = "subjects", "Subjects"
+    OVPN = "ovpn", "OVPN"
 
 
 class Actions(models.TextChoices):

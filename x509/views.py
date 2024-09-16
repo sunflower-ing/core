@@ -78,7 +78,7 @@ class KeyViewSet(viewsets.ModelViewSet):
             entity="KEY",
             object_id=instance.pk,
         )
-        return super().create(request, *args, **kwargs)
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()

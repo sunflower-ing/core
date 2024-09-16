@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "insecure-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 TEMPLATE_DEBUG = DEBUG
 
-VERSION = "0.1.5"
+VERSION = "0.1.8"
 
 FORCE_SCRIPT_NAME = os.environ.get("FORCE_SCRIPT_NAME", "/")
 
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "x509.apps.X509Config",
     "ocsp.apps.OCSPConfig",
     "subjects.apps.SubjectsConfig",
+    "ovpn.apps.OvpnConfig",
     # 'django.contrib.admin',
     "django.contrib.auth",
     "django.contrib.contenttypes",
