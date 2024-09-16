@@ -115,7 +115,12 @@ class CSRSerializer(serializers.ModelSerializer):
             "extended_key_usage",
             "body",
         )
-        read_only_fields = ["signed", "subject", "body", "created_at"]
+        read_only_fields = [
+            "signed",
+            "subject",
+            "body",
+            "created_at",
+        ]
 
 
 class CertificateSerialiser(serializers.ModelSerializer):
@@ -130,6 +135,7 @@ class CertificateSerialiser(serializers.ModelSerializer):
             "subject",
             "imported",
             "created_at",
+            "expires_at",
             "revoked",
             "revoked_at",
             "revocation_reason",
@@ -137,4 +143,4 @@ class CertificateSerialiser(serializers.ModelSerializer):
             "fingerprint",
             "num_signed",
         )
-        read_only_fields = ["subject", "sn"]
+        read_only_fields = ["subject", "sn", "expires_at"]

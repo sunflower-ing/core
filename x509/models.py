@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import dsa, rsa
 from django.conf import settings
@@ -265,6 +267,10 @@ class Certificate(models.Model):
     @property
     def subject(self) -> str:
         return self.as_object().subject.rfc4514_string()
+
+    @property
+    def expires_at(self) -> datetime:
+        return self.as_object().not_valid_after_utc
 
     @property
     def cn(self) -> str | None:
