@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "x509.apps.X509Config",
     "ocsp.apps.OCSPConfig",
     "subjects.apps.SubjectsConfig",
+    "ovpn.apps.OvpnConfig",
     # 'django.contrib.admin',
     "django.contrib.auth",
     "django.contrib.contenttypes",
